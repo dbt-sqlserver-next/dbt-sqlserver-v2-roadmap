@@ -35,7 +35,7 @@ them by path. Update this index in the same change as a file's `status`.
 
 | Draft | Live | What it is | Pending |
 |---|---|---|---|
-| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Conflicts with `main`; drop `fe6b636df` at the next sync; live body behind the draft |
+| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Rebased locally (`sqlserver-v2-port-rebased`, drops `fe6b636df`); needs a force-push decision; live body behind the draft |
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
 | [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Multi-statement batch returns the cleanup query's empty result | Fix PR #15766 unreviewed and conflicting; live body behind the draft |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |

@@ -16,74 +16,29 @@ this. [Part 10 is closed](https://github.com/dbt-sqlserver-next/dbt-core/issues/
 (merged as [PR #20](https://github.com/dbt-sqlserver-next/dbt-core/pull/20)),
 so the branch is at the point where this was supposed to get opened.
 
-Verified against the checkout: `sqlserver-v2-port` is 16 commits ahead of
-`upstream/main` (`git log --oneline upstream/main..HEAD`), 14 of them
-`sqlserver`-scoped (the Part 1–10 series plus the changelog entry added
-below), plus two general-engine fixes found while smoke-testing Part 10.
+## Branch state
+
+- Pushed `sqlserver-v2-port` (`5085525a8`) is 16 commits on merge-base
+  `a5fe6f429`, 720+ behind `main`, and conflicts in 14 files, which is why
+  #15769 shows as conflicting.
+- Rebased locally as `sqlserver-v2-port-rebased` (`46704326d`, not pushed):
+  16 commits on `upstream/main` `315bad676`. It has 14 `sqlserver`-scoped
+  commits and the #15766 pair (`f5fedba17`, `b8a348ae3`). It drops `fe6b636df`,
+  which upstream fixed as `712702b7e` (`cell_as_bool`; #15767 closed, #15768
+  closed unmerged).
+- On the rebased branch these all pass: `cargo check --workspace
+  --all-targets`, clippy `-D warnings` on the touched crates, and `cargo test`
+  (`dbt-adapter --lib` 1517, `dbt-auth` 329, `dbt-schemas` 682, `dbt-loader`
+  234, `dbt-tasks-sa` 185, plus `dbt-adapter-core`, `dbt-adapter-sql`,
+  `dbt-init` and `dbt-df-providers`). None of it has run against a live server.
+- #15766 is still open, and upstream's `execute_inner` still keeps only the last
+  batch, so the pair stays until it merges.
+- Publishing the rebase means force-pushing `sqlserver-v2-port`.
 
 ## Notes for filing
 
-**1. Two commits overlap an already-open, separate upstream PR — stated in
-the PR body below, not resolved by a rebase.** `16152a55f` (`fix(adapter):
-keep the real result set from a multi-statement query batch`) and
-`2343c50b4` (its changelog entry) are already filed independently:
-[dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765)
-/ [PR #15766](https://github.com/dbt-labs/dbt/pull/15766). #15766 is
-still open and unmerged, now with merge conflicts against `main` and no
-maintainer review, so there's nothing to rebase away yet. The bug is still
-present on `upstream/main` (`execute_inner` in `adapter_impl.rs` keeps the
-last statement's batch). They stay in this diff; the PR body says so explicitly so reviewers
-treat them as already-tracked at `#15765`/`#15766` rather than re-reviewing
-them here. Once `#15766` merges, the next `sqlserver-v2-port` sync with
-`main` drops both commits automatically (no action needed then either).
-
-**2. The `should_warn`/`should_error` truthiness fix — fixed upstream; drop
-`fe6b636df`.** The maintainers fixed it independently in `712702b7e`
-(`fix(tasks): coerce text 'true'/'false' in test-result boolean columns`),
-closed #15767 as completed, and #15768 was closed unmerged. `fe6b636df` on
-`sqlserver-v2-port` is now redundant, conflicts with `712702b7e` in
-`materialize.rs`, and has to come out of this branch at the next sync with
-`main`. How it was filed: no existing
-upstream issue (checked `gh issue list --repo dbt-labs/dbt --search
-"should_warn should_error truthiness"` and related terms, nothing hit).
-Filed from the drafted content
-(`issues/v2-test-result-bool-parsing-truthiness.md`), trimmed to match the
-sibling issue's (`#15765`) Summary/Reproduction/Suggested-fix shape:
-[dbt-labs/dbt#15767](https://github.com/dbt-labs/dbt/issues/15767),
-and the fix cherry-picked to a `main`-based branch
-(`upstream-fix-should-warn-truthiness`) and opened as
-[PR #15768](https://github.com/dbt-labs/dbt/pull/15768) using the
-repo's actual `pull_request_template.md` (`Resolves #` / `Problem` /
-`Solution` / `Checklist`), with its own changelog entry
-(`Fixes-20260803-should-warn-truthiness.yaml`). `fe6b636df` on
-`sqlserver-v2-port` was kept in the branch with the same "found while
-smoke-testing, tracked separately" treatment as item 1.
-
-**3. `Features` changelog entry — created.**
-`.changes/unreleased/Features-20260803-sqlserver-adapter.yaml` added and
-committed (`5085525a8`):
-
-```yaml
-kind: Features
-body: Add experimental support for the SQL Server adapter (dbt Fusion / v2). Enable
-    with DBT_ALLOW_EXPERIMENTAL_ADAPTERS=true.
-time: 2026-08-03T00:00:00.000000-00:00
-custom:
-    author: axellpadilla
-    issue: "15714"
-    project: dbt-core
-```
-
-**4. The branch is behind `main` and doesn't merge cleanly.** #15769 shows
-as conflicting. `upstream/main` is 720 commits past the branch's merge-base
-(`a5fe6f429`), and a trial `git merge-tree` conflicts in 14 files, among them
-`adapter_impl.rs`, `relation_impl.rs`, `sql_types.rs`,
-`dbt-auth/src/sqlserver/mod.rs` and `dbt-profile-schemas/src/lib.rs`. Upstream
-also moved `dbt-init/src/adapter_config/` into `dbt-profile-schemas/`, where
-`sqlserver_config.rs` has to follow, and inlined
-`format_ident::default_identifier_case` into `normalize_component`
-(`f98cbd643`), so the branch's `SqlServer` comment on that call has to move
-onto the inline match.
+**Changelog.** `.changes/unreleased/Features-20260803-sqlserver-adapter.yaml`
+(`kind: Features`, `issue: "15714"`) is committed on the branch.
 
 ## Draft PR
 
@@ -192,43 +147,37 @@ in the roadmap repo.
 
 ## Verified
 
-- `cargo build -p dbt-adapter-core -p dbt-adapter-sql`: clean
-- `cargo nextest run -p dbt-schemas`: 446 passed / 0 failed
-- `cargo nextest run -p dbt-auth`: 287 passed / 0 failed
-- `cargo test -p dbt-adapter --lib`: 891 passed / 0 failed
-- `cargo test -p dbt-loader --test main`: 47 passed / 0 failed (43 pre-existing + 4 new)
-- `cargo test -p dbt-init`: 7/7 passing (no regression; no new tests — no
-  `adapter_config/*.rs` file in the crate has coverage today, `fabric_config.rs` included)
-- `cargo fmt --check` / `cargo clippy --all-targets`: clean throughout
+On this branch, rebased on `main` `315bad676`:
+
+- `cargo check --workspace --all-targets`, `cargo fmt --check`, and
+  `cargo clippy --all-targets -D warnings` on the touched crates: clean
+- `cargo test -p dbt-adapter --lib`: 1517 passed
+- `cargo test -p dbt-auth`: 329 passed; `-p dbt-schemas`: 682; `-p dbt-loader`:
+  234; `-p dbt-tasks-sa`: 185; `-p dbt-adapter-sql`: 41; `-p dbt-adapter-core`:
+  17; `-p dbt-init`: 7; `-p dbt-df-providers`: 5. No failures.
 - `cargo build -p dbt-sa-cli`: clean
-- End-to-end: clean `dbt build` (seed, run, generic tests, unit tests)
-  against a local SQL Server 2022 container and a T-SQL-ported
-  [jaffle-shop](https://github.com/dbt-labs/jaffle-shop), plain SQL auth.
-  Auth-mode matrix beyond plain SQL (service principal, AD password,
-  environment credential) not exercised end-to-end — no Azure AD
-  credentials available in this environment; each is unit-tested in
-  `dbt-auth` individually.
 
-## Bugs found outside SQL Server's own code, filed separately
+Before the rebase, `dbt build` of a T-SQL-ported
+[jaffle-shop](https://github.com/dbt-labs/jaffle-shop) (seed, run, tests) ran
+against a local SQL Server 2022 container with SQL auth. Unit tests on models
+with CTEs fail (see below). Other auth modes are unit-tested in `dbt-auth` only;
+no Azure AD credentials were available.
 
-Two pre-existing gaps shared with `Fabric` (same T-SQL engine, same
-unmodified shared macros), not fixed here: `dbt_utils.expression_is_true`
-selects an unaliased literal, which T-SQL rejects from any named derived
-table or view; `dbt.date_spine`/`generate_series` nests a `WITH` block
-inside another CTE, which T-SQL also rejects, breaking
-`metricflow_time_spine`. Roadmap-repo drafts:
-`issues/v2-dbt-utils-expression-is-true-unnamed-column-tsql.md`,
-`issues/v2-date-spine-nested-cte-tsql.md`.
+## Known gaps outside this diff
+
+Found while testing, not fixed here; each will be filed on its own:
+
+- Unit tests fail for any model with its own CTEs: the unit-test renderer
+  nests the model's `WITH` inside a CTE, which T-SQL rejects (Msg 156).
+- `dbt.date_spine` fails on SQL Server (nested `WITH`, `order by 1`); the fix
+  is a `sqlserver__date_spine` override in the adapter's macros.
+- `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects
+  inside the test wrapper (dbt-labs/dbt-utils).
 
 ## Note on two out-of-scope commits in this diff
 
-This branch also carries `16152a55f`/`2343c50b4` (a multi-statement query
-batch fix) and `fe6b636df` (a test-boolean-parsing fix) — general dbt
-Fusion engine bugs found while smoke-testing this adapter, not part of the
-SQL Server port itself. Each is filed and reviewable on its own:
-[#15765](https://github.com/dbt-labs/dbt/issues/15765)/[#15766](https://github.com/dbt-labs/dbt/pull/15766)
-for the first, [#15767](https://github.com/dbt-labs/dbt/issues/15767)/[#15768](https://github.com/dbt-labs/dbt/pull/15768)
-for the second. Please review those separately rather than as part of this
-adapter's diff. The second is already fixed on `main` by `712702b7e` and
-leaves this branch at its next sync; the first drops out once `#15766`
-merges.
+This branch also carries `f5fedba17`/`b8a348ae3`, a multi-statement query batch
+fix found while smoke-testing this adapter. It's a general engine bug, filed and
+reviewable on its own as
+[#15765](https://github.com/dbt-labs/dbt/issues/15765)/[#15766](https://github.com/dbt-labs/dbt/pull/15766).
+Please review it there; it drops out of this diff once #15766 merges.

@@ -18,14 +18,11 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- Pushed `sqlserver-v2-port` (`5085525a8`) is 16 commits on merge-base
-  `a5fe6f429`, 720+ behind `main`, and conflicts in 14 files, which is why
-  #15769 shows as conflicting.
-- Rebased locally as `sqlserver-v2-port-rebased` (`46704326d`, not pushed):
-  16 commits on `upstream/main` `315bad676`. It has 14 `sqlserver`-scoped
-  commits and the #15766 pair (`f5fedba17`, `b8a348ae3`). It drops `fe6b636df`,
-  which upstream fixed as `712702b7e` (`cell_as_bool`; #15767 closed, #15768
-  closed unmerged).
+- `sqlserver-v2-port` (`46704326d`) is 16 commits on `upstream/main`
+  `315bad676`: 14 `sqlserver`-scoped commits and the #15766 pair (`f5fedba17`,
+  `b8a348ae3`). `fe6b636df` was dropped, since upstream fixed it as `712702b7e`
+  (`cell_as_bool`; #15767 closed, #15768 closed unmerged). #15769 reports
+  `MERGEABLE`.
 - On the rebased branch these all pass: `cargo check --workspace
   --all-targets`, clippy `-D warnings` on the touched crates, and `cargo test`
   (`dbt-adapter --lib` 1517, `dbt-auth` 329, `dbt-schemas` 682, `dbt-loader`
@@ -33,7 +30,6 @@ so the branch is at the point where this was supposed to get opened.
   `dbt-init` and `dbt-df-providers`). None of it has run against a live server.
 - #15766 is still open, and upstream's `execute_inner` still keeps only the last
   batch, so the pair stays until it merges.
-- Publishing the rebase means force-pushing `sqlserver-v2-port`.
 
 ## Notes for filing
 

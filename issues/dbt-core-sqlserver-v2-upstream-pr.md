@@ -30,6 +30,15 @@ so the branch is at the point where this was supposed to get opened.
   `dbt-init` and `dbt-df-providers`). None of it has run against a live server.
 - #15766 is still open, and upstream's `execute_inner` still keeps only the last
   batch, so the pair stays until it merges.
+- Three fork PRs against the branch are open, measured on SQL Server 2022:
+  [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) (NOT NULL in
+  unit-test casts), [#22](https://github.com/dbt-sqlserver-next/dbt-core/pull/22)
+  (column types, auth default, `access_token`) and
+  [#23](https://github.com/dbt-sqlserver-next/dbt-core/pull/23) (whole batches
+  under `XACT_ABORT`, incremental models, model constraints, v1 macro sync).
+  Until #23 merges, incremental models, `persist_docs` and `drop_schema` fail
+  on this branch. Once it does, the `XACT_ABORT` item under "Deferred" below
+  no longer applies.
 
 ## Notes for filing
 

@@ -21,6 +21,7 @@ them by path. Update this index in the same change as a file's `status`.
 |---|---|---|---|
 | [v2-fabric-sp-procedures-name-arguments](v2-fabric-sp-procedures-name-arguments.md) | dbt-labs/dbt | Fabric passes names to `sp_tables`/`sp_columns` unquoted and as `LIKE` patterns | Measured on SQL Server, not Fabric |
 | [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | Unit-test SQL nests a model's `WITH` inside a CTE; T-SQL rejects it | Hoist fix measured as SQL, not implemented |
+| [v2-unit-test-fixture-cast-not-null](v2-unit-test-fixture-cast-not-null.md) | dbt-labs/dbt | Unit-test fixtures cast to `<type> NOT NULL` for a NOT NULL `given` column | Measured on SQL Server only; reproduce on Postgres or Fabric |
 | [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
 | [v2-dbt-utils-expression-is-true-unnamed-column-tsql](v2-dbt-utils-expression-is-true-unnamed-column-tsql.md) | dbt-labs/dbt-utils | `expression_is_true` selects an unaliased literal; T-SQL rejects it | — |
 | [v2-sqlserver-catalog-varchar-name-literals](v2-sqlserver-catalog-varchar-name-literals.md) | dbt-sqlserver-next/dbt-core | Catalog queries use `varchar` literals; non-code-page names are missed or mismatched | Fix on the branch |

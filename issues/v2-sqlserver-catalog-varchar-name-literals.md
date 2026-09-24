@@ -3,7 +3,7 @@ target_repo: dbt-sqlserver-next/dbt-core
 type: bug
 status: draft
 parent: https://github.com/dbt-sqlserver-next/dbt-core/issues/5
-related: ./v2-fabric-sp-columns-unquoted-arguments.md
+related: ./v2-fabric-sp-procedures-name-arguments.md
 ---
 
 # Catalog queries compare names against `varchar` literals, so names outside the database's code page are lost
@@ -52,13 +52,8 @@ nothing, so the prefix belongs in the `SqlServer` call sites or a `SqlServer`
 arm of `format_str`, not in the default arm. Add a test next to the existing
 `o'brien` case in the module's tests.
 
-## v1 has the same pattern
+## v1
 
-dbt-sqlserver's macros mostly compare names against unprefixed literals too:
-`metadata.sql` (`sys.schemas where name = '{{ schema }}'`, `t.name = '{{ schema_relation.identifier }}'`),
-`indexes.sql` and `apply_grants.sql`. Only `persist_docs.sql` and a few sites
-in `columns.sql`, `metadata.sql` and `relations/table/create.sql` use `N'...'`.
-Those are the same query shape as the measurement above, but I haven't run v1
-end to end against such a name. If v1 is confirmed, this becomes a
-dbt-msft/dbt-sqlserver issue as well, and the v2 fix above doesn't need to wait
-for it.
+v1 has the same bug in its macros, and there it breaks table and incremental
+models end to end: `v1-varchar-name-literals-non-codepage.md`, for
+dbt-msft/dbt-sqlserver. The v2 fix doesn't need to wait for it.

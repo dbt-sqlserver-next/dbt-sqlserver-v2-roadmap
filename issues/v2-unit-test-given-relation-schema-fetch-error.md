@@ -5,26 +5,10 @@ status: draft
 related: ../plan/04-testing-and-validation.md
 ---
 
-# Unit test `given` upstream relation schema fetch intermittently fails against SQL Server, root cause unconfirmed
+# Unit test `given` schema fetch errors drop the database's message
 
-Observed twice while smoke-testing the SQL Server Fusion (v2) adapter against
-jaffle-shop (`dbt-sqlserver-next/dbt-core` Part 10), across two independent
-`dbt build` runs — but for a *different* relation each time, which is why
-this is filed separately from the two confirmed nested-`WITH` findings
-(`v2-date-spine-nested-cte-tsql.md`,
-`v2-unit-test-actual-cte-nests-model-with-clause-tsql.md`) rather than
-folded into either.
-
-## Summary
-
-`fetch_schema_for_unit_test_relation` (`renderable/unit_test.rs`) resolves the
-schema of a unit test's `given`/upstream relation before building the test's
-SQL. It delegates to `hydrate_unit_test_relation_schema`, which calls
-`metadata_adapter.list_relations_sdf_schemas` and, on failure, raises the
-error through `into_fs_error`. Only local (`Sidecar`) unit tests take the
-coordinated `get_or_try_fetch_fixture_schema` path first; a run against the
-warehouse calls `hydrate_unit_test_relation_schema` directly. The call fails
-with a generic, un-elaborated error:
+Running jaffle-shop's unit tests with the SQL Server adapter from #15769, some
+unit tests failed before rendering:
 
 ```
 [error] [ExecutorFailed (dbt1401)]: Remote database error while fetching
@@ -32,42 +16,33 @@ schema for unit test upstream relation from `given`
 '"TestDB"."dbo"."stg_supplies"'
 ```
 
-Unlike the other database errors surfaced in the same runs (which all
-include the driver's own message, e.g. `[mssql] Could not execute query:
-...`), this error carries no inner SQL/driver detail — the `AdapterError`
-being converted by `into_fs_error` appears to have an empty or generic
-message at this call site, which is itself worth investigating independently
-of the underlying failure.
+The error carries no driver message. Every other database error in the same
+runs includes one (`[mssql] Could not execute query: ...`).
 
-Two data points so far:
-- Run 1 (pre-rebase, `part-10-sqlserver-smoke-test`): failed for
-  `"TestDB"."raw"."raw_stores"` *and* `"TestDB"."dbo"."stg_supplies"`.
-- Run 2 (post-rebase onto `upstream-fix-execute-inner-last-batch`): failed
-  only for `"TestDB"."dbo"."stg_supplies"` — `raw_stores` succeeded this
-  time.
+## What's known
 
-Both target relations existed and had already built successfully earlier in
-the same run (visible in the build log preceding each failure), which rules
-out "relation doesn't exist yet" as the cause. The fact that different runs
-fail on different relations suggests either a timing/ordering race in when
-the metadata catalog call runs relative to some other state, or a
-relation-shape-dependent catalog query bug (e.g. specific to views built via
-the multi-statement `CREATE VIEW`-based test/materialization pattern) — not
-yet distinguished.
+- Two builds failed on different relations: the first on `raw.raw_stores` and
+  `dbo.stg_supplies`, the second (with #15766 applied) on `dbo.stg_supplies`
+  only.
+- Both relations had already been built earlier in the same run.
+- The message comes from `fetch_schema_for_unit_test_relation`
+  (`dbt-tasks-sa` `renderable/unit_test.rs`), in the branch where
+  `list_relations_sdf_schemas` returns a per-relation `Err`. It calls
+  `into_fs_error(err).with_context(...)`. `into_fs_error` puts the
+  `AdapterError` text in `FsError.context`, and `FsError::with_context`
+  (`dbt-error` `types.rs`) replaces `context`, so the driver message is
+  discarded. The metadata-call error in the same function goes through the same
+  pair.
+- On SQL Server that per-relation result comes from
+  `SqlServerMetadataAdapter::list_relations_schemas_inner`: one catalog query
+  (`build_columns_sql`) per relation on a pooled connection, then
+  `build_schema_from_columns`.
 
-## Impact
+Not reproduced since, and not reduced to a single relation or query.
 
-Unknown scope until root-caused: at minimum, some unit tests intermittently
-fail to resolve their `given` relation's schema against SQL Server, which
-blocks the unit test entirely (`Skipped` cascade for everything downstream
-in the same run). Not yet confirmed whether this reproduces on other
-adapters or is SQL-Server-specific.
+## Asks
 
-## Suggested fix
-
-Not yet identified — this issue documents an observed, reproducible-in-kind
-(but not reproducible-in-specifics) symptom, not a root cause. Next step is
-a live-instance run with the metadata adapter's SQL/call tracing enabled to
-capture the actual underlying error `into_fs_error` is discarding, and to
-check whether the failure is deterministic per-relation or genuinely
-timing-dependent across runs.
+1. Keep the `AdapterError` text at these two call sites, e.g. by folding it
+   into the context string. Without it, the failure can't be told apart from a
+   timing problem, a query error or a schema-building error.
+2. With that in place, the root cause can be re-run and filed separately.

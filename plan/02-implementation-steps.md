@@ -334,8 +334,9 @@ shows up as wrong SQL rather than a build failure. Work the list rather than
     the name of the current database". Fabric never meets this because a
     warehouse *is* the database; on SQL Server, cross-database references are
     ordinary, and v1 supports them by emitting `USE [db];` first.
-  - `@table_name` is a `LIKE` pattern unless `@fUsePattern = 0` is passed, so
-    `probe_table` also returns `probeXtable`. `\_` does not escape it. In
+  - `@table_owner` and `@table_name` are `LIKE` patterns, so `probe_table`
+    also returns `probeXtable`. `\_` does not escape them; `[_]` does.
+    `sp_tables` takes `@fUsePattern = 0`, `sp_columns` has no such parameter. In
     `get_relation` the extra row fails the one-row check; in `sp_columns` it
     merges a second table's columns into the schema. dbt model names are
     snake_case, so this is not an edge case.

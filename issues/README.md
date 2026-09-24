@@ -19,14 +19,14 @@ them by path. Update this index in the same change as a file's `status`.
 
 | Draft | Target | What it is | Before filing |
 |---|---|---|---|
-| [v2-fabric-sp-columns-unquoted-arguments](v2-fabric-sp-columns-unquoted-arguments.md) | dbt-labs/dbt | `EXEC sp_columns` gets relation names unquoted: parse errors on `-`, spaces, keywords, `'` | Measured on SQL Server, not Fabric. File together with the LIKE-pattern draft; same line |
-| [v2-fabric-sp-tables-like-pattern](v2-fabric-sp-tables-like-pattern.md) | dbt-labs/dbt | `sp_tables`/`sp_columns` treat `_` in a name as a wildcard | Measured on SQL Server, not Fabric |
-| [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | Unit-test SQL nests a model's `WITH` inside a CTE; T-SQL rejects it | Needs an end-to-end confirmation against a live server |
-| [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` relation schema fetch fails with an empty error message | Root cause unconfirmed |
-| [v2-date-spine-nested-cte-tsql](v2-date-spine-nested-cte-tsql.md) | dbt-labs/dbt-adapters | `date_spine` nests `WITH` and uses `order by 1`; breaks `metricflow_time_spine` on T-SQL | Fix untested end to end |
+| [v2-fabric-sp-procedures-name-arguments](v2-fabric-sp-procedures-name-arguments.md) | dbt-labs/dbt | Fabric passes names to `sp_tables`/`sp_columns` unquoted and as `LIKE` patterns | Measured on SQL Server, not Fabric |
+| [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | Unit-test SQL nests a model's `WITH` inside a CTE; T-SQL rejects it | Hoist fix measured as SQL, not implemented |
+| [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
 | [v2-dbt-utils-expression-is-true-unnamed-column-tsql](v2-dbt-utils-expression-is-true-unnamed-column-tsql.md) | dbt-labs/dbt-utils | `expression_is_true` selects an unaliased literal; T-SQL rejects it | — |
-| [v2-sqlserver-catalog-varchar-name-literals](v2-sqlserver-catalog-varchar-name-literals.md) | dbt-sqlserver-next/dbt-core | Catalog queries use `varchar` literals; non-code-page names are missed or mismatched | Fix on the branch; v1 has the same pattern, unconfirmed end to end |
-| [v2-sqlserver-normalize-component-collation-fold](v2-sqlserver-normalize-component-collation-fold.md) | dbt-sqlserver-next/dbt-core | `normalize_component` lowercases regardless of collation | — |
+| [v2-sqlserver-catalog-varchar-name-literals](v2-sqlserver-catalog-varchar-name-literals.md) | dbt-sqlserver-next/dbt-core | Catalog queries use `varchar` literals; non-code-page names are missed or mismatched | Fix on the branch |
+| [v2-sqlserver-normalize-component-collation-fold](v2-sqlserver-normalize-component-collation-fold.md) | dbt-sqlserver-next/dbt-core | `normalize_component` lowercases regardless of collation | Needs a design decision |
+| [v2-date-spine-nested-cte-tsql](v2-date-spine-nested-cte-tsql.md) | dbt-msft/dbt-sqlserver | `date_spine` fails on SQL Server (nested `WITH`, `order by 1`); `sqlserver__date_spine` override | — |
+| [v1-varchar-name-literals-non-codepage](v1-varchar-name-literals-non-codepage.md) | dbt-msft/dbt-sqlserver | `varchar` name literals break table and incremental models named outside the code page | — |
 | [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128 | — |
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |

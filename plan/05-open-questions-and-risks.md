@@ -169,10 +169,11 @@ rather than per-file. All five are locked; raise them with dbt Labs in
   **Done in Part 5, and it paid off twice.** Fabric's module drives
   `sp_tables`/`sp_columns`; on SQL Server 2022 those read only the
   connection's current database (error 15250 for any other
-  `@table_qualifier`), and `@table_name` is a `LIKE` pattern unless
-  `@fUsePattern = 0` is passed, so `stg_orders` also matches `stgXorders`.
-  The pattern half is a live defect in Fabric's own code — drafted as
-  `issues/v2-fabric-sp-tables-like-pattern.md`, unfiled. The port uses
+  `@table_qualifier`), and `@table_owner`/`@table_name` are `LIKE`
+  patterns, so `stg_orders` also matches `stgXorders`. Fabric's module also
+  passes some of those arguments unquoted. Both are live defects in Fabric's
+  own code, drafted as `issues/v2-fabric-sp-procedures-name-arguments.md`,
+  unfiled. The port uses
   three-part catalog-view queries instead. `sp_columns` also drops
   precision, scale and length from `TYPE_NAME`, which `sys.columns` carries.
 
@@ -191,7 +192,7 @@ rather than per-file. All five are locked; raise them with dbt Labs in
     v1 has the same defect and knows it: `TestCachingUppercaseModel` is
     `@pytest.mark.skip`ped with "Fails because of case sensitivity. MODEL is
     coereced to model which fails the test as it sees conflicting naming."
-    Marked `TODO` in the Part 4 arm.
+    Noted in a comment on `normalize_component`.
   - `relation_impl.rs` `get_canonical_fqn` — pass-through, correct either way.
   - `dbt-df-providers` `seed_io.rs` `infer_seed_column_name_strategy` — see the
     census below; `Verbatim` is the arm that matches how SQL Server stores an

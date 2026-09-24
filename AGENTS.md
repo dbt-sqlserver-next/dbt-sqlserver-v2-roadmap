@@ -1,205 +1,130 @@
-# Working in this repo
+# AGENTS.md
 
-Instructions for coding agents. Humans may find the context useful too.
+Conventions for agents and contributors in this roadmap repo. It plans the port
+of dbt-sqlserver to dbt Core v2 (Fusion) and holds no adapter code; `plan/` and
+`issues/` make claims about two codebases that keep moving:
 
-## What this repo is
+```
+dbt-labs/dbt:main ───── upstream remote ──┐
+                                          ▼
+dbt-sqlserver-next/dbt-core:sqlserver-v2-port  →  dbt-core/       PR #15769 → dbt-labs/dbt:main
+dbt-msft/dbt-sqlserver:master (v1)             →  dbt-sqlserver/  the adapter being ported
+```
 
-A planning and coordination workspace for porting dbt-sqlserver to dbt Core v2
-(Fusion). It contains **no adapter code**. Almost every sentence in `plan/` is a
-claim about one of two codebases that are actively changing:
+`make setup` clones both (gitignored, not submodules; `plan/README.md` says
+why). `.devcontainer/` carries both toolchains and runs `make setup` on
+creation. Inside a checkout, its own `AGENTS.md` comes first; this file adds
+only what the port needs.
 
-- `dbt-labs/dbt` — where the v2 adapter lives, cloned to `dbt-core/`
-- `dbt-msft/dbt-sqlserver` — the v1 adapter being ported, cloned to `dbt-sqlserver/`
+The failure mode here is rarely a bug. It's a confident sentence that stopped
+being true.
 
-`make setup` clones both (they're gitignored, not submodules — `plan/README.md`
-explains why). `dbt-core` comes from the fork on the `sqlserver-v2-port`
-integration branch, with `dbt-labs/dbt` as the `upstream` remote, so a
-checkout is on the branch the port lands on rather than on upstream `main`.
+## Verify, don't recall
 
-`.devcontainer/` provides both toolchains in one container — Rust plus
-`cargo-nextest`, `z3`, `pkg-config` and `protoc` for dbt-core; Python, `uv`
-and the Microsoft ODBC driver for dbt-sqlserver; docker-in-docker for
-`make server` — and runs `make setup` on creation, so both checkouts are in
-the workspace.
-
-That framing drives everything below: **the main failure mode here is not a bug,
-it's a confident sentence that stopped being true.**
-
-## Verify against a checkout, not against memory or a loose grep
-
-Every claim in `plan/` was checked against a real checkout. Keep it that way.
-
-- **List directories, don't infer them from grep.** `00-current-state.md` §6
-  once claimed the `dbt-fabric` macro package held 2 files, from a
-  non-exhaustive grep. It holds 42, and the wrong number had propagated into a
-  porting strategy that told people to rewrite macros the upstream project
-  actually vendors verbatim. `find <dir> -type f` before characterizing a tree.
-- **Name the symbol, not the line.** `plan/02` once sent people to
-  `relation_impl.rs` line 219 for `include_policy`; by the time anyone
-  followed it, 219 was `get_database` — a different match, with different
-  consequences. Cite `relation_impl.rs` `include_policy` instead. A function,
-  constant or enum variant survives edits above it; a line number doesn't, and
-  a stale one is worse than none because it still looks checked.
-- **Read the code that implements the thing, not just the thing that names it.**
-  `adapter.parse_index` exists and is dispatched from Jinja, which reads like
-  working support; the implementation it resolves to is `unimplemented!()` for
-  every adapter. Follow the call through.
-
-When a claim can be settled by running a command, run the command and state the
-result plainly. Don't write "very likely", "presumably", or "should be" about
-something a `grep` would answer in five seconds.
-
-## Check live state before trusting a decision
-
-Decisions in `plan/05-open-questions-and-risks.md` were made against a snapshot
-of both repos. Upstream keeps moving, and it has already invalidated
-reasoning here at least twice — a quoting decision framed as a deliberate
-divergence from v1 became alignment when v1 shipped
-[#795](https://github.com/dbt-msft/dbt-sqlserver/pull/795), and a "SQL
-Server-specific extra" turned out to be a shared dbt feature Postgres also
-exposes.
-
-Before relying on a decision, or restating one to the user:
+- Settle a claim with a command and state the result. No "very likely" or
+  "should be" about something a `grep` answers.
+- List a directory with `find <dir> -type f` before characterizing it. A
+  partial grep once counted 2 files in `dbt-fabric`'s macro package; it holds 42.
+- Cite the file and symbol, not the line: `relation_impl.rs` `include_policy`.
+  Line numbers go stale silently, and a stale one still looks checked.
+- Follow the call to its implementation. `adapter.parse_index` is dispatched from
+  Jinja and resolves to `unimplemented!()`.
+- Check live state before relying on or restating a decision. Read PR bodies,
+  not just titles; #795's body held the live-server measurement that answered an
+  open question.
 
 ```bash
 gh issue view 786 --repo dbt-msft/dbt-sqlserver --json state,body
 gh pr list --repo dbt-msft/dbt-sqlserver --state all --limit 20
-gh issue list --repo dbt-sqlserver-next/dbt-core --state all   # Part N series
-gh issue view 15714 --repo dbt-labs/dbt --json state,comments
-git -C dbt-sqlserver log --oneline -20
+gh issue list --repo dbt-sqlserver-next/dbt-core --state all
+gh pr view 15769 --repo dbt-labs/dbt --json state,mergeable,comments
+git -C dbt-core fetch upstream && git -C dbt-sqlserver fetch origin
 ```
 
-Read the PR bodies, not just the titles. #795's body carried live-server
-measurements — `sessionproperty('QUOTED_IDENTIFIER') = 1` on all three
-backends — that answered an open question in the plan and that nothing in the
-diff would have told you.
+When reality has moved, fix the affected docs in the same change and say so in
+the commit message.
 
-If reality has moved, fix the affected docs in the same change, and say so in
-the commit message rather than silently rewriting.
+## Ask when a decision is ambiguous
 
-## When a decision is ambiguous, ask — with enough context to decide
+Trade-offs between deferring work and shipping a silent behavior change belong
+to the user. Ask before writing a plan section that assumes an answer, and give
+enough to decide without opening a checkout:
 
-Ambiguity here usually means a real trade-off between deferring work and
-shipping a silent behavior change. Those are the user's call, not yours.
+1. What you found, with the file and symbol or PR.
+2. What each option costs: crates, rough size, who blocks it.
+3. The user-visible consequence, especially a silent one. A config that no-ops
+   without an error is always worth flagging.
+4. Your recommendation.
 
-Don't ask bare questions ("should we support indexes?"). Give the user what
-they'd need to answer without opening a checkout:
+## Outward-facing actions
 
-1. **What you found**, with the file:line or PR that establishes it.
-2. **What each option costs**, concretely — which crates, roughly how much work,
-   what's blocked by whom.
-3. **What the user-visible consequence is**, especially any silent one. A
-   feature that no-ops without an error is worth flagging every time.
-4. **Your recommendation**, stated as such.
+- Commit locally; don't push unless told to in the current session.
+- Don't edit live issues or PRs on `dbt-msft/dbt-sqlserver`,
+  `dbt-sqlserver-next/dbt-core` or `dbt-labs/dbt`. Update the draft in
+  `issues/`, propose the edit, and note any drift between a draft and its live
+  issue.
 
-Worked example, from this repo's history: rather than "should indexes be in
-scope?", the useful framing was — the shared `dbt-adapters` package already
-defines the index contract and v1 already speaks it, so this isn't exotic; but
-`adapter.parse_index` is `unimplemented!()` in Rust for every adapter, so
-shipping it means doing that work first; and deferring it means a model
-configured with `indexes:` builds successfully with no indexes and no warning,
-which is bad for a user base that leans on clustered columnstore. That gives
-the user something to decide.
+## Text
 
-Ask before, not after, writing a plan section that assumes an answer.
+Brief by default: docs, drafts, commits, issues and PR descriptions. Cut any
+sentence that repeats the one before it. When the point is a structure (branch
+topology, a state machine, a build path), draw a diagram instead of describing
+it, as above; when it isn't, leave the diagram out.
 
-## Outward-facing actions need explicit approval
+- **`plan/` and `issues/`** state what is true now. History lives in git, not in
+  "previously said" or "updated on" notes. Don't hedge what you checked or
+  assert what you didn't. Keep the audit hashes in `plan/00-current-state.md`
+  honest: bump them only after re-verifying.
+- **Commits** follow Conventional Commits: `type(scope): imperative subject`,
+  lowercase, no period, under ~70 characters. The body carries only what the
+  diff can't: why this shape, what was rejected, what's open.
+- **PR bodies** group by decision, not by file, one line per non-obvious call
+  with what was checked. State what you verified (`cargo test -p dbt-adapter
+  --lib: 891 passed`), not what should work. No invented issue references, no
+  `Signed-off-by` unless asked.
 
-The repo coordinates work across trackers that other people read.
+## Code
 
-- **Don't push.** Commit locally and let the user push, unless they've said
-  otherwise in the current session.
-- **Don't edit live issues** on `dbt-msft/dbt-sqlserver`,
-  `dbt-sqlserver-next/dbt-core`, or `dbt-labs/dbt`. Drafts in `issues/`
-  mirror them; propose the edit and let the user apply it.
-- Note in your summary when a draft has drifted from the live issue it mirrors,
-  so the user can decide whether to sync.
+Write the simplest change that solves the problem. Avoid workarounds,
+speculative abstractions and options no caller uses. In a checkout, match the
+surrounding code and follow that repo's `AGENTS.md`.
 
-## Commit messages and PR bodies
+## Comments
 
-Same failure mode as the rest of this file: an AI default that pads instead of
-informing. The diff already shows *what* changed and *how* — a commit or PR
-that re-narrates it is noise a reviewer has to read past.
+Only write what the code beside the comment cannot show. Don't narrate history
+or restate the code. Do keep the gotchas: why a call runs once and not twice,
+which direction a check fails, why a value is pinned or escaped. If a comment
+asserts a deliberate choice, update it when the choice changes.
 
-- **Header**: `type(scope): imperative subject`, lowercase, no trailing period,
-  under ~70 chars — `feat(sqlserver): add SQL type mapping and column
-  builder`, not `Updated some files for type mapping`. Match the fork's actual
-  convention (`git log --oneline`) rather than inventing one; `dbt-core` mixes
-  scoped and unscoped but is consistently lowercase-imperative.
-- **Body carries only what the diff can't**: why this shape and not another,
-  what was rejected and why, what's still open. "Added a SqlServer arm to
-  handle the match" is redundant with the diff; "reproduces v1's
-  `convert_number_type` scale-threshold rule instead of Fabric's flat mapping"
-  is not.
-- **PR body groups by decision, not by file.** One line per non-obvious call
-  (why `standardize_grants_dict`'s `SqlServer` arm joined the
-  Postgres/Bigquery/DuckDB/Alt group instead of the "not implemented" bucket),
-  citing what was checked. Skip an itemized list of files touched — the PR
-  view already has that.
-- **State what you verified, not what should work**: `cargo test -p
-  dbt-adapter --lib: 891 passed`, not "tests should pass now."
-- No invented issue references, no `Signed-off-by` unless asked, no
-  attribution beyond what the harness adds automatically.
+Code in `dbt-core/` and `dbt-sqlserver/` is read by people who don't know this
+roadmap exists:
 
-## Writing style for `plan/` and `issues/`
+- Match the density of the neighbouring code. A five-line note beside
+  one-liners reads as a warning sign.
+- Keep the archaeology out: why v1 chose 127, what a constant was copied from,
+  which alternative lost. That goes in the commit, the PR body and `plan/`.
+- No comparisons with a neighbouring adapter unless the file already makes them;
+  they go stale when the neighbour moves.
+- Don't describe behavior that isn't implemented yet.
 
-These documents are read by contributors who weren't in the conversation that
-produced them.
+## Tests
 
-- **State what is true now.** No "this section previously said", no "updated
-  2026-08-02", no "no longer a divergence". Git holds the history; the document
-  holds the current state.
-- **Cite the file and the symbol** for claims about either codebase — a
-  function, constant, enum variant or macro name — so the next person can
-  re-verify with a grep rather than re-derive. Not line numbers: they go stale
-  silently on the next upstream edit, and both checkouts move.
-- **Keep the audit hashes in `00-current-state.md` honest.** If you re-verify
-  against a newer commit, bump them. If you didn't verify, don't.
-- Don't hedge what you checked, and don't assert what you didn't.
-- Skip the emphasis-shouting (`**DECIDED**`, `**do not**`, `**required**`).
-  Ordinary prose carries it.
-
-## Comments in code you write into `dbt-core/` or `dbt-sqlserver/`
-
-Those are other people's repos. A comment there is read by contributors who
-don't know this roadmap exists, and it has to survive review by people who
-won't accept a file that argues with itself.
-
-- **Match the density and style of the arms around yours.** If the neighbouring
-  match arms carry a one-line `SAFETY` note, yours gets a one-line note. A
-  five-line justification next to four one-liners reads as a warning sign, not
-  as care.
-- **No comment that restates the line or banner dividers.**
-  `// increment i` and `// ============ CONTROLLERS ============` cost a
-  reader more than they give back. If deleting the comment loses no
-  information, delete it. `TODO`s are normal here — `adapter_impl.rs` carries
-  plenty, almost all bare (`// TODO: ...`) or owner-tagged (`// TODO(name):
-  ...`), rarely a link — so match that, not a stricter convention this repo
-  doesn't actually follow.
-- **Don't put the archaeology in their source.** Why v1 chose 127, what a
-  constant was copied from, which alternative was rejected — that belongs in
-  the commit message, the PR body and `plan/`, where the people who need it
-  will look. The code comment states the fact the reader needs to understand
-  the line: `sysname` is `nvarchar(128)`, plus the docs link.
-- **No comparative comments unless the file already makes comparisons.**
-  "Unlike Fabric, which has no `threads` field" explains a decision to someone
-  reading a diff, not to someone reading the file a year later — by then it's
-  just a claim about a neighbour that may have moved. Put the contrast in the
-  PR.
-- **Don't describe behavior that isn't implemented yet.** A comment saying
-  connection init SQL "guarantees" `QUOTED_IDENTIFIER` is false until the part
-  that issues it lands. Write what is true now, the same rule as `plan/`.
-
-When the reasoning is genuinely load-bearing and has nowhere else to go, that's
-a sign it belongs in a test name or an issue, not in a comment.
+- Verify SQL behavior by running it against a live server (`make server`).
+  Assert on emitted SQL only for a property the server cannot show. Never assert
+  on SQL instead of executing it. The same applies to claims in `plan/` and
+  `issues/`: measure them, and name the server version.
+- Test behavior and integration; the flow already exercises parameters and
+  configs. Don't write trivial assertions (text in text, param in params),
+  redundant checks, or tests that cannot fail.
+- Keep throwaway checks and scratch databases out of the repo, and drop them
+  when done.
 
 ## Where things live
 
-- `plan/00`–`05` — audit, architecture, step-by-step checklist, macro map,
-  testing, decisions and risks. `plan/README.md` is the entry point.
-- `issues/` — drafts of issues filed on other repos, reviewed here first. Each
-  carries frontmatter with `target_repo`, `status` (`draft`, `open` or
-  `closed`) and the live `url`. `issues/README.md` indexes them by status, with
-  what each still needs; update it in the same change as a file's `status`.
-- `Makefile` — clones both repos, and runs the local SQL Server container by
-  delegating to dbt-sqlserver's own `docker-compose.yml`.
+- `plan/00`–`05`: audit, architecture, checklist, macro map, testing, decisions
+  and risks. Start at `plan/README.md`.
+- `issues/`: drafts of issues filed on other repos. Frontmatter carries
+  `target_repo`, `status` (`draft`, `open` or `closed`) and the live `url`.
+  `issues/README.md` indexes them by status; update it with any `status` change.
+- `Makefile`: clones both repos and runs SQL Server through dbt-sqlserver's
+  `docker-compose.yml`.

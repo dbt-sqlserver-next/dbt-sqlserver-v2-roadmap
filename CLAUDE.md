@@ -11,5 +11,5 @@ wrong here:
   against the `dbt-core/` and `dbt-sqlserver/` checkouts and against live
   issue/PR state before trusting or restating a decision.
 - **Ambiguous calls belong to the user.** Ask, with the evidence, the cost of
-  each option, and any silent user-visible consequence — see AGENTS.md, "When a
+  each option, and any silent user-visible consequence — see AGENTS.md, "Ask when a
   decision is ambiguous".

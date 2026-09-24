@@ -10,7 +10,7 @@ frontmatter carries `target_repo`, `status` and, once filed, the live `url`.
 
 A filed draft mirrors the live body. When they differ, the draft holds the
 intended text and the live issue needs syncing by hand (see AGENTS.md,
-"Outward-facing actions need explicit approval").
+"Outward-facing actions").
 
 Files stay flat and keep their names because live issues and `plan/` link to
 them by path. Update this index in the same change as a file's `status`.

@@ -30,7 +30,7 @@ This plan follows the official contribution guide:
   Server's driver already ships from the CDN, `00-current-state.md` §2) while
   its *semantics* are not. In v1 the adapter was itself a pip package, which is
   where the confusion comes from.
-- **Target repo (upstream)**: https://github.com/dbt-labs/dbt-core (local checkout: `dbt-core/`)
+- **Target repo (upstream)**: https://github.com/dbt-labs/dbt (local checkout: `dbt-core/`)
 - **Working fork + integration branch**: https://github.com/dbt-sqlserver-next/dbt-core,
   branch `sqlserver-v2-port`. All contributor work lands here first, not
   directly on upstream `main` — see "Branching strategy" below for why.
@@ -94,7 +94,7 @@ Registering `AdapterType::SqlServer` (Step 5.1) breaks every exhaustive
 `match adapter_type()` block across every crate depending on
 `dbt-adapter-core` — `cargo build --bin dbt` and dbt-core's CI fail
 workspace-wide until all arms are filled in. Never merge that to
-`dbt-labs/dbt-core:main` piecemeal.
+`dbt-labs/dbt:main` piecemeal.
 
 - **Fork**: https://github.com/dbt-sqlserver-next/dbt-core
 - **Integration branch**: `sqlserver-v2-port`
@@ -103,7 +103,7 @@ workspace-wide until all arms are filled in. Never merge that to
 - Once the full vertical slice (`02-implementation-steps.md` §5.1–5.6)
   builds clean, tests pass, and it clears the jaffle-shop smoke test
   (`04-testing-and-validation.md`), it goes upstream as one PR (or a tight
-  same-day sequence) to `dbt-labs/dbt-core:main`.
+  same-day sequence) to `dbt-labs/dbt:main`.
 - The branch periodically merges upstream `main`.
 
 ## Why `dbt-core/` and `dbt-sqlserver/` aren't submodules

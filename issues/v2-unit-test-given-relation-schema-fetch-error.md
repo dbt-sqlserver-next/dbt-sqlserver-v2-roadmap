@@ -1,5 +1,5 @@
 ---
-target_repo: dbt-labs/dbt-core
+target_repo: dbt-labs/dbt
 type: bug
 status: draft
 related: ../plan/04-testing-and-validation.md
@@ -17,10 +17,14 @@ folded into either.
 
 ## Summary
 
-`fetch_schema_for_unit_test_relation` (`renderable/unit_test.rs`) calls
-`metadata_adapter.list_relations_sdf_schemas` to resolve the schema of a unit
-test's `given`/upstream relation before building the test's SQL. This call
-fails with a generic, un-elaborated error:
+`fetch_schema_for_unit_test_relation` (`renderable/unit_test.rs`) resolves the
+schema of a unit test's `given`/upstream relation before building the test's
+SQL. It delegates to `hydrate_unit_test_relation_schema`, which calls
+`metadata_adapter.list_relations_sdf_schemas` and, on failure, raises the
+error through `into_fs_error`. Only local (`Sidecar`) unit tests take the
+coordinated `get_or_try_fetch_fixture_schema` path first; a run against the
+warehouse calls `hydrate_unit_test_relation_schema` directly. The call fails
+with a generic, un-elaborated error:
 
 ```
 [error] [ExecutorFailed (dbt1401)]: Remote database error while fetching

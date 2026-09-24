@@ -8,12 +8,12 @@ A planning and coordination workspace for porting dbt-sqlserver to dbt Core v2
 (Fusion). It contains **no adapter code**. Almost every sentence in `plan/` is a
 claim about one of two codebases that are actively changing:
 
-- `dbt-labs/dbt-core` — where the v2 adapter lives, cloned to `dbt-core/`
+- `dbt-labs/dbt` — where the v2 adapter lives, cloned to `dbt-core/`
 - `dbt-msft/dbt-sqlserver` — the v1 adapter being ported, cloned to `dbt-sqlserver/`
 
 `make setup` clones both (they're gitignored, not submodules — `plan/README.md`
 explains why). `dbt-core` comes from the fork on the `sqlserver-v2-port`
-integration branch, with `dbt-labs/dbt-core` as the `upstream` remote, so a
+integration branch, with `dbt-labs/dbt` as the `upstream` remote, so a
 checkout is on the branch the port lands on rather than on upstream `main`.
 
 `.devcontainer/` provides both toolchains in one container — Rust plus
@@ -65,7 +65,7 @@ Before relying on a decision, or restating one to the user:
 gh issue view 786 --repo dbt-msft/dbt-sqlserver --json state,body
 gh pr list --repo dbt-msft/dbt-sqlserver --state all --limit 20
 gh issue list --repo dbt-sqlserver-next/dbt-core --state all   # Part N series
-gh issue view 15714 --repo dbt-labs/dbt-core --json state,comments
+gh issue view 15714 --repo dbt-labs/dbt --json state,comments
 git -C dbt-sqlserver log --oneline -20
 ```
 
@@ -110,7 +110,7 @@ The repo coordinates work across trackers that other people read.
 - **Don't push.** Commit locally and let the user push, unless they've said
   otherwise in the current session.
 - **Don't edit live issues** on `dbt-msft/dbt-sqlserver`,
-  `dbt-sqlserver-next/dbt-core`, or `dbt-labs/dbt-core`. Drafts in `issues/`
+  `dbt-sqlserver-next/dbt-core`, or `dbt-labs/dbt`. Drafts in `issues/`
   mirror them; propose the edit and let the user apply it.
 - Note in your summary when a draft has drifted from the live issue it mirrors,
   so the user can decide whether to sync.

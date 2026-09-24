@@ -6,7 +6,7 @@ adapter to **dbt Core v2.0** (the Rust/"Fusion" engine), per dbt Labs'
 guide.
 
 This repo does **not** contain the adapter code itself — that work happens as
-PRs against [`dbt-labs/dbt-core`](https://github.com/dbt-labs/dbt-core). This
+PRs against [`dbt-labs/dbt`](https://github.com/dbt-labs/dbt). This
 repo holds the plan, decision log, and local dev tooling used to get there.
 
 ## Layout
@@ -31,7 +31,7 @@ make update  # pull latest on both
 ```
 
 `dbt-core` is cloned from [the fork](https://github.com/dbt-sqlserver-next/dbt-core)
-on the `sqlserver-v2-port` integration branch, with `dbt-labs/dbt-core` added as
+on the `sqlserver-v2-port` integration branch, with `dbt-labs/dbt` added as
 the `upstream` remote — see `plan/README.md`, "Branching strategy". Override
 with `DBT_CORE_URL` / `DBT_CORE_BRANCH`, and pass
 `CLONE_ARGS=--filter=blob:none` for a blobless clone.
@@ -57,5 +57,5 @@ submodules. See `plan/README.md` for why.
 - Guide: https://docs.getdbt.com/guides/adapter-creation-v2
 - Upgrading to v2: https://docs.getdbt.com/docs/dbt-versions/core-upgrade/upgrading-to-v2?version=2.0
 - Fusion package compatibility: https://docs.getdbt.com/guides/fusion-package-compat
-- Target repo: https://github.com/dbt-labs/dbt-core
+- Target repo: https://github.com/dbt-labs/dbt
 - v1 adapter: https://github.com/dbt-msft/dbt-sqlserver

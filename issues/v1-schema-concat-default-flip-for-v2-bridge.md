@@ -1,12 +1,20 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: enhancement
-status: open
+status: closed
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/800
+resolved_by: https://github.com/dbt-msft/dbt-sqlserver/pull/811
 related: ../plan/02-implementation-steps.md
 ---
 
 # Flip `dbt_sqlserver_use_default_schema_concat`'s default to `True` in the final 1.12 release
+
+> **Resolved 2026-08-06** — shipped in
+> [PR #811](https://github.com/dbt-msft/dbt-sqlserver/pull/811) (v1.12.0rc3):
+> `dbt_sqlserver_use_default_schema_concat` now defaults to `True` in
+> `sqlserver_adapter.py`. v1 and v2 agree on schema naming, and Part 8's macro
+> package ships no `sqlserver__generate_schema_name` override. Kept here as the
+> filed record; the proposal text below is unedited.
 
 ## Summary
 

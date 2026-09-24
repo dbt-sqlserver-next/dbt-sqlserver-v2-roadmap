@@ -1,11 +1,25 @@
 ---
-target_repo: dbt-labs/dbt-core
+target_repo: dbt-labs/dbt
 type: bug
-status: draft
+status: closed
+url: https://github.com/dbt-labs/dbt/issues/15767
+pr: https://github.com/dbt-labs/dbt/pull/15768
+resolved_by: https://github.com/dbt-labs/dbt/commit/712702b7eb2d024f42a40593d2443097d6c9c74b
 related: ../plan/04-testing-and-validation.md
 ---
 
 # `get_test_results` reads `should_warn`/`should_error` via generic Jinja truthiness, so a textual `'false'` is read as `true`
+
+> **Resolved 2026-08-08** — fixed upstream by the maintainers in
+> [`712702b7e`](https://github.com/dbt-labs/dbt/commit/712702b7eb2d024f42a40593d2443097d6c9c74b)
+> (`fix(tasks): coerce text 'true'/'false' in test-result boolean columns`),
+> which adds `cell_as_bool` to `crates/dbt-tasks-sa/src/materialize.rs`: the
+> same parse-text-then-fall-back-to-truthiness approach proposed here.
+> [PR #15768](https://github.com/dbt-labs/dbt/pull/15768) was closed unmerged as
+> a result, and the fork's copy of the fix (`fe6b636df` on `sqlserver-v2-port`)
+> is now redundant and has to be dropped from
+> [#15769](https://github.com/dbt-labs/dbt/pull/15769). Kept here as the filed
+> record; the text below is unedited.
 
 Found while smoke-testing the SQL Server Fusion (v2) adapter
 (`dbt-sqlserver-next/dbt-core` Part 10), but the affected code

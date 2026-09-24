@@ -12,7 +12,7 @@ related: ../plan/README.md
 
 ## Summary
 
-Links the issues and PRs — here and in `dbt-labs/dbt-core` — for bringing SQL Server support to dbt Core v2.0 (the Rust/"Fusion" engine), plus the v1 fixes found while auditing v1 for that port. Decisions and detail live in the [roadmap repo](https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap) `plan/`; this issue stays a one-line-per-item index.
+Links the issues and PRs — here and in `dbt-labs/dbt` — for bringing SQL Server support to dbt Core v2.0 (the Rust/"Fusion" engine), plus the v1 fixes found while auditing v1 for that port. Decisions and detail live in the [roadmap repo](https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap) `plan/`; this issue stays a one-line-per-item index.
 
 dbt Labs' [Contribute a dbt Core 2.0 Adapter](https://docs.getdbt.com/guides/adapter-creation-v2) guide has v2 adapters living inside the `dbt-core` monorepo. v1 (`dbt-sqlserver`) keeps existing as an independently maintained package; this tracks the parallel v2 work.
 
@@ -25,7 +25,7 @@ dbt Labs' [Contribute a dbt Core 2.0 Adapter](https://docs.getdbt.com/guides/ada
 
 - **Fork**: https://github.com/dbt-sqlserver-next/dbt-core
 - **Branch**: `sqlserver-v2-port`
-- Open PRs against `dbt-sqlserver-next/dbt-core:sqlserver-v2-port`, not `dbt-labs/dbt-core:main`. Rationale: roadmap repo's `plan/README.md` ("Branching strategy").
+- Open PRs against `dbt-sqlserver-next/dbt-core:sqlserver-v2-port`, not `dbt-labs/dbt:main`. Rationale: roadmap repo's `plan/README.md` ("Branching strategy").
 
 ## Related: aligning v1 with the future v2 parser, on this repo
 
@@ -33,7 +33,10 @@ dbt Labs' [Contribute a dbt Core 2.0 Adapter](https://docs.getdbt.com/guides/ada
 
 ## dbt-core (v2 adapter implementation)
 
-- [x] [dbt-labs/dbt-core#15714](https://github.com/dbt-labs/dbt-core/issues/15714) — bootstrap/scope-alignment issue (upstream, public)
+- [x] [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) — bootstrap/scope-alignment issue (upstream, public)
+- [ ] [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) — the adapter PR itself, open as draft, closes #15714
+- [ ] [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) — engine bug found by the port: a multi-statement `statement()` block returns its trailing cleanup query's empty result. Fix open as [#15766](https://github.com/dbt-labs/dbt/pull/15766)
+- [x] [dbt-labs/dbt#15767](https://github.com/dbt-labs/dbt/issues/15767) — engine bug found by the port: text `'false'` in `should_warn`/`should_error` read as true. Fixed upstream in `712702b7e`
 
 Granular execution ("Part N" issues, one per crate-scoped unit of work) is tracked on the fork, not here — same reasoning as "Where PRs go" above (`Closes #N` only works same-repo, and these aren't mergeable upstream yet): [dbt-sqlserver-next/dbt-core#1](https://github.com/dbt-sqlserver-next/dbt-core/issues/1) through [`#10`](https://github.com/dbt-sqlserver-next/dbt-core/issues/10) ([index](https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap/blob/main/issues/dbt-core-sqlserver-v2-parts.md)).
 
@@ -41,6 +44,7 @@ Granular execution ("Part N" issues, one per crate-scoped unit of work) is track
 
 - [x] #785 — Inconsistent identifier quoting (`[bracket]` vs `"double quote"`) across a handful of macros. Shipped in #795 (v1.12.0rc2); v1 and v2 now render identifiers the same way, so the ported macros need no quoting rewrite.
 - [x] #409 — `Incorrect syntax near '\'` for a domain-qualified schema: the clustered columnstore index name was emitted bare. Pre-existing bug, found and fixed by the same audit (#795).
+- [x] #800 — `dbt_sqlserver_use_default_schema_concat` now defaults to `True` (#811, v1.12.0rc3), so v1 and v2 name custom schemas the same way.
 - [ ] *(more get added here as they're found/filed)*
 
 Surfaced by that audit, not yet filed: `cci_name` strips `.` and ` ` from generated index names, and the `QUOTENAME()` blocks assume the model's own schema (both listed as non-goals in #795).
@@ -60,4 +64,4 @@ Not scheduled — tracked so they aren't lost. Reasoning: roadmap repo's `plan/0
 
 - Roadmap: https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap
 - Guide: https://docs.getdbt.com/guides/adapter-creation-v2
-- v2 target repo: https://github.com/dbt-labs/dbt-core
+- v2 target repo: https://github.com/dbt-labs/dbt

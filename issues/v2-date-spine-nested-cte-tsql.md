@@ -47,12 +47,18 @@ T-SQL only allows a single `WITH` introducing a flat, comma-separated CTE
 list at the start of a statement/batch — a CTE's own body cannot contain
 another `WITH`-introduced list.
 
-A second, independent T-SQL restriction sits behind the same macro:
-`generate_series`'s `row_number() over (order by 1)`-style windowing (an
-ordinal literal in place of a real column) is also rejected —
+A second, independent T-SQL restriction sits in `default__date_spine` itself:
+its `all_periods` CTE computes each period as
+`dateadd(..., row_number() over (order by 1) - 1, ...)`, and an ordinal
+literal in a window's `ORDER BY` is rejected —
 `Msg 5308: Windowed functions ... do not support integer indices as ORDER BY
 clause expressions.` — so flattening the CTE alone isn't sufficient; both
 need addressing together.
+
+A third restriction is in `default__generate_series`, but hasn't shown up in a
+run yet because the parse fails on the nested `WITH` first: the macro ends in
+`order by generated_number`, and T-SQL rejects an `ORDER BY` inside a CTE
+unless `TOP`, `OFFSET` or `FOR XML` is also specified (Msg 1033).
 
 ## Impact
 
@@ -67,11 +73,13 @@ live Fabric warehouse.
 
 ## Suggested fix
 
-A `sqlserver__generate_series` (and ideally `fabric__generate_series`)
-override that:
-- returns its CTEs as fragments to be spliced into the caller's own top-level
-  `WITH` list, rather than a self-contained statement, so `date_spine` never
-  nests a second `WITH`; and
+A `sqlserver__date_spine` override (and ideally `fabric__date_spine`), since
+two of the three problems are in `date_spine`'s own body and an override of
+`generate_series` alone can't reach them. It:
+- builds the number series in the same top-level `WITH` list as its own CTEs,
+  either inline or via a `generate_series` variant that returns CTE fragments
+  rather than a self-contained statement, so no second `WITH` is nested;
+- drops the trailing `order by generated_number` from the nested series; and
 - replaces the ordinal `order by 1` with `order by (select null)`, which
   T-SQL accepts as an explicitly-unordered window.
 

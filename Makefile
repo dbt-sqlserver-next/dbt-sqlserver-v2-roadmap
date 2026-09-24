@@ -1,9 +1,9 @@
 # dbt-core is cloned from the fork, on the integration branch the port lands on
-# (plan/README.md, "Branching strategy"). dbt-labs/dbt-core is added as the
+# (plan/README.md, "Branching strategy"). dbt-labs/dbt is added as the
 # `upstream` remote so the branch can be rebased on it.
 DBT_CORE_URL             ?= https://github.com/dbt-sqlserver-next/dbt-core.git
 DBT_CORE_BRANCH          ?= sqlserver-v2-port
-DBT_CORE_UPSTREAM_URL    ?= https://github.com/dbt-labs/dbt-core.git
+DBT_CORE_UPSTREAM_URL    ?= https://github.com/dbt-labs/dbt.git
 DBT_CORE_UPSTREAM_BRANCH ?= main
 
 DBT_SQLSERVER_URL ?= https://github.com/dbt-msft/dbt-sqlserver.git
@@ -20,7 +20,7 @@ help:
 	@echo "Targets:"
 	@echo "  make setup              Clone dbt-core and dbt-sqlserver if missing"
 	@echo "  make clone-dbt-core     Clone the fork's $(DBT_CORE_BRANCH) branch into ./dbt-core,"
-	@echo "                          with dbt-labs/dbt-core as the 'upstream' remote"
+	@echo "                          with dbt-labs/dbt as the 'upstream' remote"
 	@echo "  make clone-dbt-sqlserver  Clone dbt-msft/dbt-sqlserver into ./dbt-sqlserver"
 	@echo "  make update             git pull both repos on their current branch"
 	@echo "  make status             git status for both repos"

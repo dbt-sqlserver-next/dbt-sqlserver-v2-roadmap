@@ -1,5 +1,5 @@
 ---
-target_repo: dbt-labs/dbt-core
+target_repo: dbt-labs/dbt
 type: bug
 status: draft
 related: ../plan/02-implementation-steps.md
@@ -108,4 +108,4 @@ copying this module.
   https://learn.microsoft.com/sql/relational-databases/system-stored-procedures/sp-tables-transact-sql
 - `sp_columns`:
   https://learn.microsoft.com/sql/relational-databases/system-stored-procedures/sp-columns-transact-sql
-- Found while porting dbt-sqlserver to v2: dbt-labs/dbt-core#15714
+- Found while porting dbt-sqlserver to v2: dbt-labs/dbt#15714

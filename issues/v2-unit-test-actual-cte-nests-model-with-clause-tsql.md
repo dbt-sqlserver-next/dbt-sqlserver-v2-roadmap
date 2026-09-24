@@ -1,5 +1,5 @@
 ---
-target_repo: dbt-labs/dbt-core
+target_repo: dbt-labs/dbt
 type: bug
 status: draft
 related: ../plan/04-testing-and-validation.md

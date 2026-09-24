@@ -2,32 +2,32 @@
 target_repo: dbt-sqlserver-next/dbt-core
 type: tracking-series
 status: open
-parent: https://github.com/dbt-labs/dbt-core/issues/15714
+parent: https://github.com/dbt-labs/dbt/issues/15714
 related: ../plan/02-implementation-steps.md
 ---
 
 # SQL Server Fusion adapter: "Part N" sub-issue series
 
 Mirrors the structure of the ClickHouse Fusion rollout
-([#14607](https://github.com/dbt-labs/dbt-core/issues/14607) and its
-series) referenced in dbt-labs/dbt-core#15714.
+([#14607](https://github.com/dbt-labs/dbt/issues/14607) and its
+series) referenced in dbt-labs/dbt#15714.
 
-## Why these live on the fork, not on `dbt-labs/dbt-core`
+## Why these live on the fork, not on `dbt-labs/dbt`
 
-Originally drafted against `dbt-labs/dbt-core` (same repo as #15714), but
+Originally drafted against `dbt-labs/dbt` (same repo as #15714), but
 that's wrong for two reasons:
 
 - GitHub's `Closes #N` auto-linking only works within a single repo. The
   PRs implementing each part get opened against
   `dbt-sqlserver-next/dbt-core:sqlserver-v2-port` (the work can't land on
   upstream `main` piecemeal — see `plan/README.md` "Branching strategy"),
-  so an issue on `dbt-labs/dbt-core` could never actually be closed by them.
+  so an issue on `dbt-labs/dbt` could never actually be closed by them.
 - Filing 10 granular WIP tickets on dbt-core's public tracker for work
   that isn't mergeable there yet is noise on someone else's repo. `#15714`
   is the one thing that belongs there — a single public touchpoint.
 
 So all 10 are issues on `dbt-sqlserver-next/dbt-core`, cross-linked to
-`dbt-labs/dbt-core#15714` via plain references (not native sub-issues,
+`dbt-labs/dbt#15714` via plain references (not native sub-issues,
 since that link crosses repos/orgs).
 
 Numbering starts at Part 1, not Part 0, because ADBC driver registration
@@ -52,4 +52,4 @@ order once Parts 1–3 land.
 | 10 | [dbt-sqlserver-next/dbt-core#10](https://github.com/dbt-sqlserver-next/dbt-core/issues/10) — jaffle-shop smoke test, changelog | — | #1–#8 |
 
 Part 10 closing is what triggers opening the actual PR(s) against
-`dbt-labs/dbt-core:main`, closing #15714.
+`dbt-labs/dbt:main`, closing #15714.

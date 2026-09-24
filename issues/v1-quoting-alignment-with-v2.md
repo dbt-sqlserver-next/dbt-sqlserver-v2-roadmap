@@ -106,4 +106,4 @@ Narrower than "quoting migration" framing suggests, since it only touches alread
 - `SET QUOTED_IDENTIFIER` docs (quoted above): https://learn.microsoft.com/en-us/sql/t-sql/statements/set-quoted-identifier-transact-sql
 - ADBC backend (PR #783): `dbt/adapters/sqlserver/sqlserver_backend.py` (`build_adbc_connection_uri`)
 - dbt Core v2.0 SQL Server port roadmap: https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap — see `plan/05-open-questions-and-risks.md` #1 (quoting decision) and `plan/03-macros-porting-map.md` (macro-porting approach referenced above)
-- v2 quoting precedent: `crates/dbt-adapter-core/src/lib.rs` (`quote_char`, `AdapterType::Fabric => '"'`) in `dbt-labs/dbt-core`
+- v2 quoting precedent: `crates/dbt-adapter-core/src/lib.rs` (`quote_char`, `AdapterType::Fabric => '"'`) in `dbt-labs/dbt`

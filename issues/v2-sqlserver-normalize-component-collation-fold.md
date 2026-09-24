@@ -9,8 +9,10 @@ related: ../plan/05-open-questions-and-risks.md
 # `normalize_component` lowercases SQL Server identifiers regardless of collation, merging names a case-sensitive server keeps distinct
 
 `crates/dbt-adapter/src/relation/relation_impl.rs` `normalize_component`
-dispatches on `AdapterType` via `format_ident::default_identifier_case`.
-`SqlServer` has no dedicated arm, so it falls into the catch-all
+dispatches on `AdapterType`: with an inline match on `upstream/main`, and via
+`format_ident::default_identifier_case` on `sqlserver-v2-port` until its next
+sync, since upstream inlined that helper in `f98cbd643`. The arms are the same
+either way. `SqlServer` has no dedicated arm, so it falls into the catch-all
 `_ => to_lowercase()`, the same arm Fabric uses. Fabric's collation is fixed
 and always case-insensitive; SQL Server's is a per-server, per-database, and
 even per-column setting, commonly case-sensitive (`_CS_`) on non-default

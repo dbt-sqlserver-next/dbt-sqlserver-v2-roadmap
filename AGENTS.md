@@ -198,6 +198,8 @@ a sign it belongs in a test name or an issue, not in a comment.
 - `plan/00`–`05` — audit, architecture, step-by-step checklist, macro map,
   testing, decisions and risks. `plan/README.md` is the entry point.
 - `issues/` — drafts of issues filed on other repos, reviewed here first. Each
-  carries frontmatter with `target_repo`, `status` and the live `url`.
+  carries frontmatter with `target_repo`, `status` (`draft`, `open` or
+  `closed`) and the live `url`. `issues/README.md` indexes them by status, with
+  what each still needs; update it in the same change as a file's `status`.
 - `Makefile` — clones both repos, and runs the local SQL Server container by
   delegating to dbt-sqlserver's own `docker-compose.yml`.

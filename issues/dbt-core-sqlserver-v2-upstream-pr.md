@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-labs/dbt
 type: pr-draft
-status: filed (draft)
+status: open
 url: https://github.com/dbt-labs/dbt/pull/15769
 base: main
 head: dbt-sqlserver-next/dbt-core:sqlserver-v2-port

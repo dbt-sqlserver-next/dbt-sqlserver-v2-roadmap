@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-sqlserver-next/dbt-core
 type: tracking-series
-status: open
+status: closed
 parent: https://github.com/dbt-labs/dbt/issues/15714
 related: ../plan/02-implementation-steps.md
 ---

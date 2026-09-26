@@ -3,6 +3,7 @@ target_repo: dbt-msft/dbt-sqlserver
 type: bug
 status: open
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/865
+pr: https://github.com/dbt-msft/dbt-sqlserver/pull/867
 related: https://github.com/dbt-msft/dbt-sqlserver/pull/864
 ---
 

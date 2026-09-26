@@ -24,7 +24,7 @@ With no dispatch, an adapter's only fix is to copy the whole macro under the
 same name, since an adapter package's macro wins over the global project's.
 Oracle, Teradata, StarRocks, SAP HANA Cloud, Doris and MySQL adapters already
 do, several with the older two-argument signature. dbt-sqlserver is about to
-([PR TBD]). Each copy drifts from upstream.
+([dbt-sqlserver#867](https://github.com/dbt-msft/dbt-sqlserver/pull/867)). Each copy drifts from upstream.
 
 ## Proposal
 

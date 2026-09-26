@@ -23,7 +23,7 @@ them by path. Update this index in the same change as a file's `status`.
 | [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | Unit-test SQL nests a model's `WITH` inside a CTE; T-SQL rejects it | Hoist fix measured as SQL, not implemented |
 | [v2-unit-test-fixture-cast-not-null](v2-unit-test-fixture-cast-not-null.md) | dbt-labs/dbt | Unit-test fixtures cast to `<type> NOT NULL` for a NOT NULL `given` column | Measured on SQL Server only; reproduce on Postgres or Fabric |
 | [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
-| [v1-adapters-dispatch-snapshot-check-cols-columns](v1-adapters-dispatch-snapshot-check-cols-columns.md) | dbt-labs/dbt-adapters | Dispatch the `check_cols` column read under a new name; dispatching the existing one wakes a dormant `exasol__` macro | Link the dbt-sqlserver PR for #865 |
+| [v1-adapters-dispatch-snapshot-check-cols-columns](v1-adapters-dispatch-snapshot-check-cols-columns.md) | dbt-labs/dbt-adapters | Dispatch the `check_cols` column read under a new name; dispatching the existing one wakes a dormant `exasol__` macro | — |
 | [v2-dbt-utils-expression-is-true-unnamed-column-tsql](v2-dbt-utils-expression-is-true-unnamed-column-tsql.md) | dbt-labs/dbt-utils | `expression_is_true` selects an unaliased literal; T-SQL rejects it | — |
 | [v2-sqlserver-catalog-varchar-name-literals](v2-sqlserver-catalog-varchar-name-literals.md) | dbt-sqlserver-next/dbt-core | Catalog queries use `varchar` literals; non-code-page names are missed or mismatched | Fix on the branch |
 | [v2-sqlserver-normalize-component-collation-fold](v2-sqlserver-normalize-component-collation-fold.md) | dbt-sqlserver-next/dbt-core | `normalize_component` lowercases regardless of collation | Needs a design decision |
@@ -43,7 +43,7 @@ them by path. Update this index in the same change as a file's `status`.
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; a macro's `statement()` writes roll back on success | Untriaged |
 | [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | With transactions on (1.12 default), `run-operation` writes are silently lost; workaround `adapter.commit_if_open()` | Waits on #16434 |
-| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` | Untriaged; fix on `fix/865-check-cols-with-query`, stacked on #864, not pushed |
+| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` | Fix PR #867 open |
 
 ## Closed
 

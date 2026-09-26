@@ -31,6 +31,7 @@ them by path. Update this index in the same change as a file's `status`.
 | [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128 | — |
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |
+| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | dbt-msft/dbt-sqlserver | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` (own CTE or an ephemeral) | Override prototyped in a scratch project, not in the adapter |
 
 ## Filed, open
 

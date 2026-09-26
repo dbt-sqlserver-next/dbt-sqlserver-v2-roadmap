@@ -82,6 +82,8 @@ it, as above; when it isn't, leave the diagram out.
   with what was checked. State what you verified (`cargo test -p dbt-adapter
   --lib: 891 passed`), not what should work. No invented issue references, no
   `Signed-off-by` unless asked.
+- Avoid manual newlines; let the formatter handle line breaks when its 
+  a text for issues or PRs.
 
 ## Code
 

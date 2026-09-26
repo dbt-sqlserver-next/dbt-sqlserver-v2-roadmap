@@ -1,7 +1,8 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: draft
+status: open
+url: https://github.com/dbt-msft/dbt-sqlserver/issues/865
 related: https://github.com/dbt-msft/dbt-sqlserver/pull/864
 ---
 

@@ -31,7 +31,6 @@ them by path. Update this index in the same change as a file's `status`.
 | [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128 | — |
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |
-| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | dbt-msft/dbt-sqlserver | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` (own CTE or an ephemeral) | Override prototyped in a scratch project, not in the adapter |
 
 ## Filed, open
 
@@ -43,6 +42,7 @@ them by path. Update this index in the same change as a file's `status`.
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; a macro's `statement()` writes roll back on success | Untriaged |
 | [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | With transactions on (1.12 default), `run-operation` writes are silently lost; workaround `adapter.commit_if_open()` | Waits on #16434 |
+| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` | Untriaged; override prototyped in a scratch project |
 
 ## Closed
 

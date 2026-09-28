@@ -84,6 +84,8 @@ it, as above; when it isn't, leave the diagram out.
   `Signed-off-by` unless asked.
 - Avoid manual newlines; let the formatter handle line breaks when its 
   a text for issues or PRs.
+- Issue drafts follow the target repo's template; `issues/README.md`,
+  "Templates", lists them per repo and dbt version.
 - Write outward text as a contributor would: no promises of later work, no narration of what you did or will do. State a dependency plainly: "Depends on #868."
 
 ## Code

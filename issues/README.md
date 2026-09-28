@@ -15,6 +15,27 @@ intended text and the live issue needs syncing by hand (see AGENTS.md,
 Files stay flat and keep their names because live issues and `plan/` link to
 them by path. Update this index in the same change as a file's `status`.
 
+## Templates
+
+A draft follows its target repo's issue template: title prefix and section
+headings. `gh issue create --body-file` bypasses the web form, so the draft has
+to carry both itself, and form labels are not applied.
+
+| Target | Kind | Template | Title | Sections |
+|---|---|---|---|---|
+| dbt-labs/dbt | 1.x bug | [bug-report.yml](https://github.com/dbt-labs/dbt/blob/main/.github/ISSUE_TEMPLATE/bug-report.yml) | `[1.x Bug] …` | new-bug checkboxes, Current Behavior, Expected Behavior, Steps To Reproduce, Relevant log output, Environment, adapter, Additional Context |
+| dbt-labs/dbt | v2 bug | [bug-report-v2.yml](https://github.com/dbt-labs/dbt/blob/main/.github/ISSUE_TEMPLATE/bug-report-v2.yml) | `[v2 Bug] …` | as 1.x, plus "Is this a discrepancy vs. dbt 1.x?" |
+| dbt-labs/dbt | regression | [regression-report.yml](https://github.com/dbt-labs/dbt/blob/main/.github/ISSUE_TEMPLATE/regression-report.yml) | `[Regression] …` | as 1.x bug, plus versions spanned; Expected/Previous Behavior |
+| dbt-labs/dbt | feature | [feature-request.yml](https://github.com/dbt-labs/dbt/blob/main/.github/ISSUE_TEMPLATE/feature-request.yml) | `[Feature] …` | dbt version, feature, alternatives, who benefits, contributing |
+| dbt-labs/dbt-adapters | bug (1.x shared macros and adapters) | [bug-report.yml](https://github.com/dbt-labs/dbt-adapters/blob/main/.github/ISSUE_TEMPLATE/bug-report.yml) | `[Bug] …` | new-bug checkboxes, affected packages, Current, Expected, Steps, log, Environment, Additional Context |
+| dbt-labs/dbt-utils | bug | [bug_report.md](https://github.com/dbt-labs/dbt-utils/blob/main/.github/ISSUE_TEMPLATE/bug_report.md) | no prefix | Describe the bug, Steps to reproduce, Expected results, Actual results, log output, System information |
+| dbt-msft/dbt-sqlserver | bug | [bug_report.md](https://github.com/dbt-msft/dbt-sqlserver/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) | no prefix | description, Steps to reproduce, Environment (database, backend, auth/driver/OS, collation), `dbt --version`, Log excerpt |
+| dbt-sqlserver-next/dbt-core | any | same files as dbt-labs/dbt | as dbt-labs/dbt | as dbt-labs/dbt |
+
+dbt-labs/dbt and dbt-adapters disable blank issues. dbt-labs/dbt's chooser
+sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
+`global_project` macros.
+
 ## Not filed yet
 
 | Draft | Target | What it is | Before filing |

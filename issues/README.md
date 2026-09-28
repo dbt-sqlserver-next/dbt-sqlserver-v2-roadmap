@@ -44,7 +44,6 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v2-fabric-multi-statement-fetch-result-first-vs-last](v2-fabric-multi-statement-fetch-result-first-vs-last.md) | dbt-labs/dbt | Fabric is split and returns the last result; dbt-fabric 1.x (mssql-python) returned the first | Not run on Fabric |
 | [v2-unit-test-fixture-cast-not-null](v2-unit-test-fixture-cast-not-null.md) | dbt-labs/dbt | Unit-test fixtures cast to `<type> NOT NULL` for a NOT NULL `given` column | Measured on SQL Server only; reproduce on Postgres or Fabric |
 | [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
-| [v2-unit-test-overrides-ignored](v2-unit-test-overrides-ignored.md) | dbt-labs/dbt | v2 never runs `unit` materialization or `get_unit_test_sql` overrides, from a project or an adapter; 1.x does | — |
 | [v2-ephemeral-select-wrapper-derived-table-alias](v2-ephemeral-select-wrapper-derived-table-alias.md) | dbt-labs/dbt | Ephemeral CTE injection wraps the model in an unaliased derived table; T-SQL rejects it (Msg 102) | Fix not implemented |
 | [v1-adapters-dispatch-snapshot-check-cols-columns](v1-adapters-dispatch-snapshot-check-cols-columns.md) | dbt-labs/dbt-adapters | Dispatch the `check_cols` column read under a new name; dispatching the existing one wakes a dormant `exasol__` macro | — |
 | [v2-dbt-utils-expression-is-true-unnamed-column-tsql](v2-dbt-utils-expression-is-true-unnamed-column-tsql.md) | dbt-labs/dbt-utils | `expression_is_true` selects an unaliased literal; T-SQL rejects it | — |
@@ -60,6 +59,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 
 | Draft | Live | What it is | Pending |
 |---|---|---|---|
+| [v2-unit-test-overrides-ignored](v2-unit-test-overrides-ignored.md) | [dbt-labs/dbt#16504](https://github.com/dbt-labs/dbt/issues/16504) | v2 never runs `unit` materialization or `get_unit_test_sql` overrides, from a project or an adapter; 1.x does | Untriaged |
 | [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Live body synced on `4d70a1069` (#26 merged); needs a maintainer to label CI; ephemeral-alias and overrides issues unfiled |
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |

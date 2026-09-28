@@ -1,7 +1,8 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: draft
+status: open
+url: https://github.com/dbt-labs/dbt/issues/16504
 related: v2-unit-test-actual-cte-nests-model-with-clause-tsql.md
 ---
 

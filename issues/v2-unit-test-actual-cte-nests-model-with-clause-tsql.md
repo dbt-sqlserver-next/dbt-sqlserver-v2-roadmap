@@ -5,7 +5,7 @@ status: draft
 related: ../plan/04-testing-and-validation.md
 ---
 
-# [v2 Bug] Unit tests on SQL Server fail for any model with its own `WITH`: the renderer nests it inside a CTE
+# [v2 Bug] Unit tests never call the adapter's `get_unit_test_sql`, so SQL Server's 1.x override is lost and models with their own `WITH` fail
 
 ### Is this a new bug in dbt v2.x compared to the latest version of dbt 1.x?
 
@@ -14,7 +14,11 @@ related: ../plan/04-testing-and-validation.md
 
 ### Current Behavior
 
-`render_unit_test` (`dbt-tasks-sa` `renderable/unit_test.rs`) puts the fixtures and the model under test into one flat `WITH` list, and splices the model's SQL in verbatim as the body of `<model>_actual`:
+In 1.x, the `unit` materialization renders the test through `get_unit_test_sql`, which adapters override: dbt-sqlserver (`sqlserver__get_unit_test_sql`), dbt-fabric (`fabric__get_unit_test_sql`) and dbt-clickhouse (its own `unit` materialization). v2 vendors all three, but never calls them. `execute_unit_test_remote_inner` (`dbt-tasks-sa` `runnable/unit_test.rs`) always runs `materialize_unit_test_fast_pass`, which executes the SQL built by `render_unit_test` with `adapter.execute`. `materialize_unit_test`, the path through the `unit` materialization, has no callers.
+
+ClickHouse's case was re-implemented in Rust (`7811ca6cd`, #16153). SQL Server's wasn't, and the shape its override exists to avoid now fails:
+
+`render_unit_test` (`dbt-tasks-sa` `renderable/renderable/unit_test.rs`) puts the fixtures and the model under test into one flat `WITH` list, and splices the model's SQL in verbatim as the body of `<model>_actual`:
 
 ```sql
 WITH
@@ -78,11 +82,11 @@ other (describe in Additional Context)
 
 ### Additional Context
 
-Adapter: SQL Server (#15769). Fabric likely has the same problem; not measured.
+Adapter: SQL Server (#15769). In 1.x, a unit test on a model with its own `WITH` passes: dbt-core 1.12.3, dbt-sqlserver 1.12.0, same server. `sqlserver__get_unit_test_sql` creates the model and the expected rows as views (`EXEC('create view … as <sql>')`, where a leading `WITH` is legal), selects the diff from them, and drops them. The same `EXEC('create view')`/select/drop shape already runs every SQL Server generic test on v2 (`sqlserver__get_test_sql`), so it works on v2's execution path.
 
-In 1.x, a unit test on a model with its own `WITH` passes: dbt-core 1.12.3, dbt-sqlserver 1.12.0, same server. The 1.x adapter's `sqlserver__get_unit_test_sql` runs the model through a view. That path doesn't exist in v2: the renderer never calls `get_unit_test_sql`.
+Fix: implement the 1.x adapter override on v2. For an adapter that defines `<adapter>__get_unit_test_sql`, render the diff through it, the way `unit` does in 1.x, passing:
 
-Fix: for SQL Server, if the rendered model SQL starts with `WITH`, emit its CTEs ahead of `<model>_actual` and use its final `SELECT` as the `_actual` body. Two constraints:
+- `main_sql`: the model's rendered SQL with the fixtures injected as CTEs. When the model starts with `WITH`, they have to be spliced into its list; `inject_ctes_into_existing_with` (`dbt-jinja-utils`) already does that for ephemeral models.
+- `expected_fixture_sql` and the quoted expected column names, which `render_unit_test` already builds.
 
-- The model is spliced as raw Jinja and rendered with the whole query, so the hoist has to run on the rendered model SQL, not on `raw_sql`.
-- The model's CTE names share a namespace with the fixture CTEs, so a clash needs an error or a rename.
+`unit_test.rs` already branches per adapter (DuckDB and ClickHouse schema inference, Snowflake/BigQuery/Databricks typing), so the branch fits the file. Fabric's `fabric__get_unit_test_sql` is dead in v2 too; not measured on Fabric.

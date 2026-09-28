@@ -18,27 +18,25 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- `sqlserver-v2-port` (`46704326d`) is 16 commits on `upstream/main`
-  `315bad676`: 14 `sqlserver`-scoped commits and the #15766 pair (`f5fedba17`,
-  `b8a348ae3`). `fe6b636df` was dropped, since upstream fixed it as `712702b7e`
-  (`cell_as_bool`; #15767 closed, #15768 closed unmerged). #15769 reports
-  `MERGEABLE`.
-- On the rebased branch these all pass: `cargo check --workspace
-  --all-targets`, clippy `-D warnings` on the touched crates, and `cargo test`
-  (`dbt-adapter --lib` 1517, `dbt-auth` 329, `dbt-schemas` 682, `dbt-loader`
-  234, `dbt-tasks-sa` 185, plus `dbt-adapter-core`, `dbt-adapter-sql`,
-  `dbt-init` and `dbt-df-providers`). None of it has run against a live server.
-- #15766 is still open, and upstream's `execute_inner` still keeps only the last
-  batch, so the pair stays until it merges.
-- Three fork PRs against the branch are open, measured on SQL Server 2022:
+- `sqlserver-v2-port` (`a9f7c5c13`) is 28 commits on `upstream/main`
+  `315bad676`, including the merges of fork PRs
   [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) (NOT NULL in
   unit-test casts), [#22](https://github.com/dbt-sqlserver-next/dbt-core/pull/22)
   (column types, auth default, `access_token`) and
   [#23](https://github.com/dbt-sqlserver-next/dbt-core/pull/23) (whole batches
   under `XACT_ABORT`, incremental models, model constraints, v1 macro sync).
-  Until #23 merges, incremental models, `persist_docs` and `drop_schema` fail
-  on this branch. Once it does, the `XACT_ABORT` item under "Deferred" below
-  no longer applies.
+  #15769 reports `MERGEABLE`.
+- The #15766 pair (`f5fedba17`, `b8a348ae3`) was dropped. SQL Server sends each
+  batch whole since #23, so it no longer needs the engine change, and #15766's
+  rule matches no 1.x driver. #15766 and #15765 are to be closed.
+- On `a9f7c5c13`: `cargo test -p dbt-adapter --lib` 1518 passed. Clippy
+  `-D warnings` on the ten touched crates fails on two `unused_qualifications`
+  in `sql_types.rs` tests; [#24](https://github.com/dbt-sqlserver-next/dbt-core/pull/24)
+  fixes them and is clean. The other crates' test counts are from `46704326d`
+  and weren't re-run, so "Verified" below needs re-running before the live body is synced.
+- `dbt build` of a probe project on `a9f7c5c13` against SQL Server 2022 (seed,
+  view, generic tests that pass, warn and fail, a singular test,
+  `store_failures`, a unit test): every result as expected.
 
 ## Notes for filing
 
@@ -137,9 +135,6 @@ declared that the adapter can't actually honor.
 - Dynamic data masking
 - Index/columnstore materialization config (loud error today, not silent)
 - `full_refresh_build: prebuilt`, scalar function materializations, table clone support
-- `SET XACT_ABORT ON` connection-init SQL (currently off by default; several
-  vendored macros assume it's on — v1 issues it, v2 doesn't yet, and there's
-  no per-connection init hook to hang it on)
 - Collation-aware case folding (`normalize_component` always folds to
   lowercase; wrong under a case-sensitive collation — matches a known,
   skipped-in-CI v1 defect, not a regression)
@@ -178,11 +173,3 @@ Found while testing, not fixed here; each will be filed on its own:
   is a `sqlserver__date_spine` override in the adapter's macros.
 - `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects
   inside the test wrapper (dbt-labs/dbt-utils).
-
-## Note on two out-of-scope commits in this diff
-
-This branch also carries `f5fedba17`/`b8a348ae3`, a multi-statement query batch
-fix found while smoke-testing this adapter. It's a general engine bug, filed and
-reviewable on its own as
-[#15765](https://github.com/dbt-labs/dbt/issues/15765)/[#15766](https://github.com/dbt-labs/dbt/pull/15766).
-Please review it there; it drops out of this diff once #15766 merges.

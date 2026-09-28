@@ -78,6 +78,7 @@ it, as above; when it isn't, leave the diagram out.
 - **Commits** follow Conventional Commits: `type(scope): imperative subject`,
   lowercase, no period, under ~70 characters. The body carries only what the
   diff can't: why this shape, what was rejected, what's open.
+  Don't commit eagerly, first all work and considerations are done for that package.
 - **PR bodies** group by decision, not by file, one line per non-obvious call
   with what was checked. State what you verified (`cargo test -p dbt-adapter
   --lib: 891 passed`), not what should work. No invented issue references, no
@@ -134,3 +135,5 @@ roadmap exists:
   `issues/README.md` indexes them by status; update it with any `status` change.
 - `Makefile`: clones both repos and runs SQL Server through dbt-sqlserver's
   `docker-compose.yml`.
+
+## Commit

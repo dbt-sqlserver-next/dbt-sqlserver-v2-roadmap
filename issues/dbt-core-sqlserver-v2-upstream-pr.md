@@ -28,8 +28,9 @@ so the branch is at the point where this was supposed to get opened.
   `3d61704d4` (with #25's first commit) the merged tree also passed clippy,
   the SQL Server crates' tests and a live build.
 - Fork PR [#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26)
-  (open) runs SQL Server unit tests through views, as v1's
-  `get_unit_test_sql` does, fixing unit tests on models with their own `WITH`.
+  (open) lifts a model's own CTEs into its unit test's `WITH` list, fixing
+  unit tests on models with their own `WITH` (and the schema probe for
+  ephemeral givens) without v1's views.
   Once it merges, the body's "Known gaps" loses that line and "Decisions" gains
   the `render_unit_test` branch.
 - The live body was synced on 2026-09-28 and matches the draft below, with

@@ -1,7 +1,8 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: draft
+status: closed
+resolution: not filed; fixed on the port by dbt-sqlserver-next/dbt-core#26
 related: ../plan/04-testing-and-validation.md
 ---
 

@@ -42,7 +42,6 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 |---|---|---|---|
 | [v2-fabric-sp-procedures-name-arguments](v2-fabric-sp-procedures-name-arguments.md) | dbt-labs/dbt | Fabric passes names to `sp_tables`/`sp_columns` unquoted and as `LIKE` patterns | Measured on SQL Server, not Fabric |
 | [v2-fabric-multi-statement-fetch-result-first-vs-last](v2-fabric-multi-statement-fetch-result-first-vs-last.md) | dbt-labs/dbt | Fabric is split and returns the last result; dbt-fabric 1.x (mssql-python) returned the first | Not run on Fabric |
-| [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | v2 never calls the adapter's `get_unit_test_sql`; SQL Server's 1.x view override is lost, so a model's `WITH` ends up nested in a CTE | Fix (honor the override) not implemented |
 | [v2-unit-test-fixture-cast-not-null](v2-unit-test-fixture-cast-not-null.md) | dbt-labs/dbt | Unit-test fixtures cast to `<type> NOT NULL` for a NOT NULL `given` column | Measured on SQL Server only; reproduce on Postgres or Fabric |
 | [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
 | [v2-ephemeral-select-wrapper-derived-table-alias](v2-ephemeral-select-wrapper-derived-table-alias.md) | dbt-labs/dbt | Ephemeral CTE injection wraps the model in an unaliased derived table; T-SQL rejects it (Msg 102) | Fix not implemented |
@@ -71,6 +70,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 
 | Draft | Live | Resolution |
 |---|---|---|
+| [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | not filed | Fixed on the port instead: a `SqlServer` branch in `render_unit_test` builds v1's view batch ([fork #26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26)). The general question, v2 ignoring `unit`/`get_unit_test_sql` overrides, is still to be measured and drafted |
 | [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Closed as not planned with PR #15766: SQL Server sends each batch whole (#23), and #15766's rule matches no 1.x driver |
 | [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | Fixed in #867 |
 | [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | Stopgap in #866 commits run-operation connections on success; remove once dbt-labs/dbt#16434 covers both paths |

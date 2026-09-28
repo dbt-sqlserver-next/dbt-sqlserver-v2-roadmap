@@ -18,25 +18,30 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- `sqlserver-v2-port` (`a9f7c5c13`) is 28 commits on `upstream/main`
-  `315bad676`, including the merges of fork PRs
-  [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) (NOT NULL in
-  unit-test casts), [#22](https://github.com/dbt-sqlserver-next/dbt-core/pull/22)
-  (column types, auth default, `access_token`) and
-  [#23](https://github.com/dbt-sqlserver-next/dbt-core/pull/23) (whole batches
-  under `XACT_ABORT`, incremental models, model constraints, v1 macro sync).
-  #15769 reports `MERGEABLE`.
-- The #15766 pair (`f5fedba17`, `b8a348ae3`) was dropped. SQL Server sends each
-  batch whole since #23, so it no longer needs the engine change, and #15766's
-  rule matches no 1.x driver. #15766 and #15765 are closed.
-- On `a9f7c5c13`: `cargo test -p dbt-adapter --lib` 1518 passed. Clippy
-  `-D warnings` on the ten touched crates fails on two `unused_qualifications`
-  in `sql_types.rs` tests; [#24](https://github.com/dbt-sqlserver-next/dbt-core/pull/24)
-  fixes them and is clean. The other crates' test counts are from `46704326d`
-  and weren't re-run, so "Verified" below needs re-running before the live body is synced.
-- `dbt build` of a probe project on `a9f7c5c13` against SQL Server 2022 (seed,
-  view, generic tests that pass, warn and fail, a singular test,
-  `store_failures`, a unit test): every result as expected.
+- `sqlserver-v2-port` (`b6c3ecc2e`) is on `upstream/main` `315bad676`, with
+  fork PRs [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) to
+  [#24](https://github.com/dbt-sqlserver-next/dbt-core/pull/24) merged. The
+  #15766 pair was dropped: SQL Server sends each batch whole since #23, and
+  #15766 and #15765 are closed.
+- Fork PR [#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25)
+  (`c5f15279d`, open) syncs the macros with dbt-sqlserver 1.12.0: `check_cols`
+  snapshots over a `WITH` query, `array_append`, and the leftover
+  `__dbt_alter` column. v1's run-operation and unit-test commits (#866, #875)
+  aren't needed on v2 (measured).
+- `upstream/main` `3d61704d4` is 21 commits ahead and merges into `c5f15279d`
+  without conflicts. On the merged tree: clippy `-D warnings` on dbt-adapter,
+  dbt-loader, dbt-auth and dbt-schemas is clean; `dbt-adapter --lib` 1523
+  passed, `dbt-loader` 247, `dbt-auth` 329, `dbt-tasks-sa` 186,
+  `dbt-schemas --lib` 687; a probe project (snapshot, incremental, views, unit
+  test, generic tests) builds 7/7 with `--full-refresh` and again without.
+  The branch itself hasn't been merged forward.
+- Upstream CI hasn't run on #15769: it's a public fork and needs the
+  `ci:approve-public-fork-ci` label from a maintainer. CodeScene's one critical
+  finding is `SqlServerDbConfig::set_field`, the same per-field `match` as
+  Fabric's.
+- The live body is behind this draft (`XACT_ABORT` described as off, the
+  dropped out-of-scope commits, a sync "after #15766 and #15768 merge"), and
+  "Verified" below predates #21 to #25.
 
 ## Notes for filing
 
@@ -165,7 +170,7 @@ no Azure AD credentials were available.
 
 ## Known gaps outside this diff
 
-Found while testing, not fixed here; each will be filed on its own:
+Found while testing, not fixed here:
 
 - Unit tests fail for any model with its own CTEs: the unit-test renderer
   nests the model's `WITH` inside a CTE, which T-SQL rejects (Msg 156).
@@ -173,3 +178,9 @@ Found while testing, not fixed here; each will be filed on its own:
   is a `sqlserver__date_spine` override in the adapter's macros.
 - `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects
   inside the test wrapper (dbt-labs/dbt-utils).
+- A model that refs an ephemeral model and doesn't start with `WITH` fails:
+  the shared CTE injection wraps it in `select * from ( … )` with no alias
+  (Msg 102).
+- `prefer_single_alter_column` is rejected as an unknown config key
+  (dbt1060), so column widening always takes the four-step rewrite. v1 1.12.0
+  widens within a type with a single `ALTER COLUMN` by default.

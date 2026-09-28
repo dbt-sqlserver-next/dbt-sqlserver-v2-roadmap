@@ -45,6 +45,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | dbt-labs/dbt | Unit-test SQL nests a model's `WITH` inside a CTE; T-SQL rejects it | Hoist fix measured as SQL, not implemented |
 | [v2-unit-test-fixture-cast-not-null](v2-unit-test-fixture-cast-not-null.md) | dbt-labs/dbt | Unit-test fixtures cast to `<type> NOT NULL` for a NOT NULL `given` column | Measured on SQL Server only; reproduce on Postgres or Fabric |
 | [v2-unit-test-given-relation-schema-fetch-error](v2-unit-test-given-relation-schema-fetch-error.md) | dbt-labs/dbt | `given` schema fetch errors lose the driver message (`FsError::with_context` replaces it) | Underlying failure not reproduced |
+| [v2-ephemeral-select-wrapper-derived-table-alias](v2-ephemeral-select-wrapper-derived-table-alias.md) | dbt-labs/dbt | Ephemeral CTE injection wraps the model in an unaliased derived table; T-SQL rejects it (Msg 102) | Fix not implemented |
 | [v1-adapters-dispatch-snapshot-check-cols-columns](v1-adapters-dispatch-snapshot-check-cols-columns.md) | dbt-labs/dbt-adapters | Dispatch the `check_cols` column read under a new name; dispatching the existing one wakes a dormant `exasol__` macro | — |
 | [v2-dbt-utils-expression-is-true-unnamed-column-tsql](v2-dbt-utils-expression-is-true-unnamed-column-tsql.md) | dbt-labs/dbt-utils | `expression_is_true` selects an unaliased literal; T-SQL rejects it | — |
 | [v2-sqlserver-catalog-varchar-name-literals](v2-sqlserver-catalog-varchar-name-literals.md) | dbt-sqlserver-next/dbt-core | Catalog queries use `varchar` literals; non-code-page names are missed or mismatched | Fix on the branch |
@@ -59,7 +60,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 
 | Draft | Live | What it is | Pending |
 |---|---|---|---|
-| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Branch at `a9f7c5c13`, #15766 pair dropped; clippy fix in fork PR #24; live body behind the draft |
+| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Fork PR #25 (1.12.0 macro sync) open; merges cleanly with `main` `3d61704d4`; live body and "Verified" behind the draft |
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |

@@ -64,13 +64,18 @@ On unit_test.proj.m.ut_ok: Close
 
 ## Fix
 
-dbt-core runs each unit test inside `connection_named(node.unique_id)`, so the unit-test connection is named `unit_test.<project>.<model>.<test>`. Adding `"unit_test."` to `SQLServerAdapter._RUN_OPERATION_CONNECTION_PREFIXES` extends the #866 stopgap to it: `connection_named` then runs `commit_if_open()` when the unit test finishes without raising. Measured with that change, both `__dbt_tmp` tables are gone after the run above, and `ut_ok` still passes and `ut_diff` still fails. The constant's name and the `connection_named` docstring would need to cover unit tests too.
+Override the `unit` materialization in the adapter as a wrapper around dbt-core's default, committing after it:
+
+```jinja
+{%- materialization unit, adapter='sqlserver' -%}
+  {% set relations = materialization_unit_default() %}
+  {% do adapter.commit_if_open() %}
+  {{ return(relations) }}
+{%- endmaterialization -%}
+```
+
+It commits right where dbt-core leaves the drop uncommitted, without copying dbt-core's materialization or matching on connection names as the #866 run-operation stopgap has to. Once dbt-labs/dbt#16499 is fixed, `commit_if_open()` finds nothing open and does nothing. Measured with it, both `__dbt_tmp` tables are gone after the run above under `dbt test` and `dbt build`, with the flag on and off, and `ut_ok` still passes and `ut_diff` still fails. A unit test that raises inside the materialization still leaves its table, which the next run replaces.
 
 ## Workaround
 
-Copy dbt-core's `unit` materialization into the project as `materialization unit, adapter='sqlserver'` and add a commit after the drop:
-
-```jinja
-  {% do adapter.drop_relation(temp_relation) %}
-  {% do adapter.commit() %}
-```
+Put the same wrapper in a file under the project's `macros/`.

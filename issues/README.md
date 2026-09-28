@@ -64,7 +64,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |
 | [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
-| [v1-unit-test-temp-table-left-behind](v1-unit-test-temp-table-left-behind.md) | [dbt-msft/dbt-sqlserver#874](https://github.com/dbt-msft/dbt-sqlserver/issues/874) | With transactions on, every unit test leaves an empty `__dbt_tmp` table; fix extends #866 to `unit_test.` connections | Fix not implemented |
+| [v1-unit-test-temp-table-left-behind](v1-unit-test-temp-table-left-behind.md) | [dbt-msft/dbt-sqlserver#874](https://github.com/dbt-msft/dbt-sqlserver/issues/874) | With transactions on, every unit test leaves an empty `__dbt_tmp` table; adapter wraps the `unit` materialization and commits | Fix PR #875 open |
 
 ## Closed
 

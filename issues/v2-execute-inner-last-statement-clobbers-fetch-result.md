@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-labs/dbt/issues/15765
 pr: https://github.com/dbt-labs/dbt/pull/15766
 related: ../plan/04-testing-and-validation.md

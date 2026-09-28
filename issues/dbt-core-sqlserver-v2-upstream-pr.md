@@ -28,7 +28,7 @@ so the branch is at the point where this was supposed to get opened.
   #15769 reports `MERGEABLE`.
 - The #15766 pair (`f5fedba17`, `b8a348ae3`) was dropped. SQL Server sends each
   batch whole since #23, so it no longer needs the engine change, and #15766's
-  rule matches no 1.x driver. #15766 and #15765 are to be closed.
+  rule matches no 1.x driver. #15766 and #15765 are closed.
 - On `a9f7c5c13`: `cargo test -p dbt-adapter --lib` 1518 passed. Clippy
   `-D warnings` on the ten touched crates fails on two `unused_qualifications`
   in `sql_types.rs` tests; [#24](https://github.com/dbt-sqlserver-next/dbt-core/pull/24)

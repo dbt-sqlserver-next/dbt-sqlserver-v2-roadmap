@@ -18,30 +18,21 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- `sqlserver-v2-port` (`b6c3ecc2e`) is on `upstream/main` `315bad676`, with
+- `sqlserver-v2-port` (`fa6731a42`) is on `upstream/main` `315bad676`, with
   fork PRs [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) to
-  [#24](https://github.com/dbt-sqlserver-next/dbt-core/pull/24) merged. The
-  #15766 pair was dropped: SQL Server sends each batch whole since #23, and
-  #15766 and #15765 are closed.
-- Fork PR [#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25)
-  (`c5f15279d`, open) syncs the macros with dbt-sqlserver 1.12.0: `check_cols`
-  snapshots over a `WITH` query, `array_append`, and the leftover
-  `__dbt_alter` column. v1's run-operation and unit-test commits (#866, #875)
-  aren't needed on v2 (measured).
-- `upstream/main` `3d61704d4` is 21 commits ahead and merges into `c5f15279d`
-  without conflicts. On the merged tree: clippy `-D warnings` on dbt-adapter,
-  dbt-loader, dbt-auth and dbt-schemas is clean; `dbt-adapter --lib` 1523
-  passed, `dbt-loader` 247, `dbt-auth` 329, `dbt-tasks-sa` 186,
-  `dbt-schemas --lib` 687; a probe project (snapshot, incremental, views, unit
-  test, generic tests) builds 7/7 with `--full-refresh` and again without.
-  The branch itself hasn't been merged forward.
+  [#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25) merged. #25
+  synced the macros with dbt-sqlserver 1.12.0 and widens columns with a single
+  `ALTER COLUMN` through `sqlserver__expand_target_column_types`. The #15766
+  pair was dropped; #15766 and #15765 are closed.
+- It merges into `upstream/main` `242065240` without conflicts. On `main`
+  `3d61704d4` (with #25's first commit) the merged tree also passed clippy,
+  the SQL Server crates' tests and a live build.
+- The live body was synced on 2026-09-28 and matches the draft below, with
+  "Verified" re-run on `fa6731a42`.
 - Upstream CI hasn't run on #15769: it's a public fork and needs the
   `ci:approve-public-fork-ci` label from a maintainer. CodeScene's one critical
   finding is `SqlServerDbConfig::set_field`, the same per-field `match` as
   Fabric's.
-- The live body is behind this draft (`XACT_ABORT` described as off, the
-  dropped out-of-scope commits, a sync "after #15766 and #15768 merge"), and
-  "Verified" below predates #21 to #25.
 
 ## Notes for filing
 
@@ -61,112 +52,147 @@ Closes #15714.
 ## Summary
 
 Adds `AdapterType::SqlServer` to dbt Fusion: profile config, authentication
-(Entra + native SQL login), relation quoting, catalog introspection, SQL
+(Entra and native SQL login), relation quoting, catalog introspection, SQL
 type mapping, the `dbt-adapter` match-arm surface, the vendored macro
-package, and an optional `dbt init` wizard. Ships gated behind
+package, and an optional `dbt init` wizard. It ships gated behind
 `DBT_ALLOW_EXPERIMENTAL_ADAPTERS=true` (not added to
-`NON_EXPERIMENTAL_ADAPTERS`), same as every other adapter's initial
-landing.
+`NON_EXPERIMENTAL_ADAPTERS`), like every other adapter's first landing.
 
-Landed as ten sequential, crate-scoped PRs against a staging branch first
-(`sqlserver-v2-port` on [dbt-sqlserver-next/dbt-core](https://github.com/dbt-sqlserver-next/dbt-core),
-[#11](https://github.com/dbt-sqlserver-next/dbt-core/pull/11)–[#20](https://github.com/dbt-sqlserver-next/dbt-core/pull/20)) —
-registering the adapter type makes every exhaustive `match adapter_type()`
-across the workspace non-exhaustive, so it can't land upstream piecemeal
-without breaking `main`'s build in between. Individual PR descriptions
-below cite the specific v1/live-server evidence behind each call; this
-summary groups by decision.
+The work landed on a staging branch first (`sqlserver-v2-port` on
+[dbt-sqlserver-next/dbt-core](https://github.com/dbt-sqlserver-next/dbt-core)):
+ten crate-scoped PRs
+([#11](https://github.com/dbt-sqlserver-next/dbt-core/pull/11)–[#20](https://github.com/dbt-sqlserver-next/dbt-core/pull/20)),
+then fixes found by running it against SQL Server and comparing it with
+dbt-sqlserver 1.12.0
+([#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21)–[#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25)).
+Registering the adapter type makes every exhaustive `match adapter_type()`
+non-exhaustive, so it can't land upstream piecemeal without breaking
+`main`'s build in between. Each fork PR cites the v1 and live-server
+evidence behind its calls; this summary groups them by decision.
 
 ## Decisions worth a reviewer's eye
 
-**Quoting**: `quote_char = '"'` with `QUOTED_IDENTIFIER` confirmed ON by
-default on a live SQL Server 2022 (no init SQL needed) — matches `Fabric`
-and matches what v1 already renders despite T-SQL also accepting
-`[brackets]`. `quoted()` doubles an embedded delimiter for `SqlServer`
-specifically (the shared default renders `x"q` as unparseable `"x"q"`);
-scoped narrowly rather than fixed in the shared default, which changes
-rendering for every quoting adapter.
+**Batches**: `execute_inner` sends a SQL Server `statement()` block whole,
+as BigQuery, DuckDB and LakeCompute already are, instead of splitting it on
+`;`. T-SQL scopes a `DECLARE`d variable to its batch and `MERGE` needs its
+terminator, so splitting broke every MERGE incremental rerun (Msg 10713) and
+`persist_docs`/`drop_schema` (Msg 137). v1 sets `XACT_ABORT ON` on every
+connection, and v2 has no per-connection hook, so `SET XACT_ABORT ON` runs as
+its own statement on the same connection just before each batch. A failed
+statement then stops the rest of its batch, as in v1. It isn't prefixed to
+the batch, because a `CREATE VIEW` must open its batch (Msg 111).
 
-**Identifier length**: `max_identifier_length = 128`, not v1's 127 — SQL
-Server's documented and live-verified limit (`sysname` is `nvarchar(128)`);
-v1's 127 traces to a copy-pasted Redshift constant, comment included. A
-128-character name that v1 rejects builds here; tracked as a v1-side bug
-separately, not changed to match v1.
+**Quoting**: `quote_char = '"'`. `QUOTED_IDENTIFIER` is ON by default on
+SQL Server 2022, so no init SQL is needed. This matches `Fabric` and what v1
+renders, although T-SQL also accepts `[brackets]`. `quoted()` doubles an
+embedded delimiter for `SqlServer` only (the shared default renders `x"q` as
+unparseable `"x"q"`). Fixing the shared default would change rendering for
+every quoting adapter.
 
-**Auth**: native SQL login (`authentication: sql`) added as a new top-level
-`SQLServerAuthIR` variant alongside the existing Entra flows (service
-principal, AD password, environment credential — already implemented and
-tested pre-port). `encrypt`/`TrustServerCertificate`/`connection timeout`
-ported from v1's own ADBC backend
+**Identifier length**: `max_identifier_length = 128`, not v1's 127. That's
+SQL Server's documented and measured limit (`sysname` is `nvarchar(128)`);
+v1's 127 is a Redshift constant copied with its comment. A 128-character
+name that v1 rejects builds here.
+
+**Auth**: native SQL login (`authentication: sql`) is a new top-level
+`SQLServerAuthIR` variant beside the existing Entra flows (service
+principal, AD password, environment credential, access token). An unset
+`authentication` means `sql`, as in v1. `encrypt`,
+`TrustServerCertificate` and the connection timeout are ported from v1's
+ADBC backend
 ([dbt-msft/dbt-sqlserver#783](https://github.com/dbt-msft/dbt-sqlserver/pull/783),
-same driver), live-verified against a self-signed on-prem instance.
-Windows/trusted-connection auth and named-instance hosts (`host\instance`)
-are deferred — the latter fails loudly at URI parse rather than shipping an
-unverified rewrite.
+same driver), and were checked against a self-signed on-prem instance.
 
-**Catalog introspection**: uses `sys.objects`/`sys.schemas`/`sys.columns`/`sys.types`
-directly rather than `Fabric`'s `sp_tables`/`sp_columns` pattern — measured
-against live SQL Server 2022 that those procedures are single-database
-(cross-database reads, which SQL Server supports and v1 relies on, error
-out) and that `@table_name` is a `LIKE` pattern, not an exact match
-(`probe_table` vs `probeXtable`). Both are pre-existing gaps in `Fabric`'s
-own module too; not touched here since only the pattern half is verifiable
-against a T-SQL engine this checkout can reach, and cross-database is
-verifiably impossible for Fabric's model to hit at all. Filed as a
-follow-up, not fixed in this PR.
+**Catalog introspection**: reads `sys.objects`/`sys.schemas`/`sys.columns`/`sys.types`
+directly rather than `Fabric`'s `sp_tables`/`sp_columns`. Measured on SQL
+Server 2022: those procedures can't read another database, which SQL Server
+supports and v1 relies on, and `@table_name` is a `LIKE` pattern
+(`probe_table` also matches `probeXtable`). `Fabric`'s module has the same
+pattern gap and isn't touched here.
 
-**Type mapping**: `STRING` → `VARCHAR(MAX)` (v1's current native-string
-default, not `Fabric`'s byte-capped `VARCHAR(8000)` — SQL Server has no
-equivalent cap tracked here); decimal → `float`/`int` keyed by scale,
-reproducing v1's threshold rather than `Fabric`'s unconditional `float`.
+**Types**: `STRING` → `VARCHAR(MAX)` (v1's native-string default, not
+`Fabric`'s `VARCHAR(8000)`). Decimal → `float`/`int` keyed by scale, v1's
+threshold. Column `data_type` follows v1's `SQLServerColumn`: `nvarchar(10)`,
+`varchar(max)` and `char(3)` keep their length, where the generic handling
+gave a bare `nvarchar` (length 1 in DDL). The type formatter never appends
+`NOT NULL`, since its callers are `CAST` targets and `Column.dtype`.
 
-**Macro package**: 34-file v1 tree vendored, mirroring `dbt-fabric`'s
-layout. `indexes:` config, `full_refresh_build: prebuilt`, and
-`table_refresh_method: dml` all raise a named compiler error rather than
-silently no-op'ing or running a different path. Dynamic data masking and
-index reconciliation on persisted tables dropped entirely (no v2 Rust
-counterpart to call).
+**Macro package**: v1's tree is vendored in `dbt-fabric`'s layout and synced
+with dbt-sqlserver 1.12.0. Changes from v1:
 
-**Not registered**: `adapter_specific_behavior_flags` returns `vec![]` —
-v1's five behavior flags (native string types, safe type expansion, dbt
-transactions, default schema concat, empty relation aliases) all stay on
-their v1 default with no alternate Rust code path yet, so nothing is
-declared that the adapter can't actually honor.
+- Calls the Rust adapter lacks (`commit_if_open`, `max_rows`) are gone;
+  v2 has no ambient transaction.
+- Columns widen through `sqlserver__expand_target_column_types`, which
+  passes `prefer_single` to `alter_column_type`, as v1's Python does. A
+  widening takes a single `ALTER COLUMN`, which keeps the column's indexes,
+  default and position. `on_schema_change` keeps the four-step rewrite, as
+  in v1.
+- `indexes:`, `full_refresh_build: prebuilt` and
+  `table_refresh_method: dml` raise a named compiler error instead of
+  running a different path. Dynamic data masking and denies aren't ported;
+  they need `adapter.resolve_*`.
+
+**Not registered**: `adapter_specific_behavior_flags` returns `vec![]`.
+v1's behavior flags have no alternate v2 code path, so each stays at its
+v1 default, and nothing is declared that the adapter can't honor.
 
 ## Deferred / explicitly out of scope
 
-- Windows/trusted-connection auth
-- Named SQL Server instances (`host\instance`)
+- Windows/trusted-connection auth, and the profile keys `windows_login`,
+  `xact_abort` (always on) and `backend`
+- Named SQL Server instances (`host\instance`): fails at URI parse
 - Dynamic data masking
-- Index/columnstore materialization config (loud error today, not silent)
-- `full_refresh_build: prebuilt`, scalar function materializations, table clone support
-- Collation-aware case folding (`normalize_component` always folds to
-  lowercase; wrong under a case-sensitive collation — matches a known,
-  skipped-in-CI v1 defect, not a regression)
+- Custom `indexes:` config (a compiler error, not a silent no-op)
+- `full_refresh_build: prebuilt`, scalar function materializations, table clone
+- Collation-aware case folding: `normalize_component` always folds to
+  lowercase, which is wrong under a case-sensitive collation. v1 has the same
+  defect.
+- Setting `prefer_single_alter_column`: the key isn't in the shared config
+  schema, so it's rejected (dbt1060). The macros read it once it's accepted.
 
-None of these were silently dropped — each is cited against the specific
-v1 behavior or plan decision it diverges from in the individual Part PRs
-(`dbt-sqlserver-next/dbt-core` #11–#20) and in
-[`05-open-questions-and-risks.md`](https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap/blob/main/plan/05-open-questions-and-risks.md)
-in the roadmap repo.
+Each is cited against the v1 behavior or plan decision it diverges from in
+the fork PRs and in
+[`05-open-questions-and-risks.md`](https://github.com/dbt-sqlserver-next/dbt-sqlserver-v2-roadmap/blob/main/plan/05-open-questions-and-risks.md).
 
 ## Verified
 
-On this branch, rebased on `main` `315bad676`:
+On `fa6731a42` (based on `main` `315bad676`; it merges into `main`
+`242065240` without conflicts):
 
-- `cargo check --workspace --all-targets`, `cargo fmt --check`, and
-  `cargo clippy --all-targets -D warnings` on the touched crates: clean
-- `cargo test -p dbt-adapter --lib`: 1517 passed
-- `cargo test -p dbt-auth`: 329 passed; `-p dbt-schemas`: 682; `-p dbt-loader`:
-  234; `-p dbt-tasks-sa`: 185; `-p dbt-adapter-sql`: 41; `-p dbt-adapter-core`:
-  17; `-p dbt-init`: 7; `-p dbt-df-providers`: 5. No failures.
+- `cargo fmt --check`, and `cargo clippy --all-targets -D warnings` on the
+  ten touched crates: clean
+- Tests, all passing:
+
+  | Crate | Passed |
+  |---|---|
+  | `dbt-adapter --lib` | 1518 |
+  | `dbt-schemas` | 683 |
+  | `dbt-auth` | 329 |
+  | `dbt-loader` | 243 |
+  | `dbt-tasks-sa` | 185 |
+  | `dbt-adapter-sql` | 41 |
+  | `dbt-adapter-core` | 17 |
+  | `dbt-init` | 7 |
+  | `dbt-df-providers` | 5 |
+  | `dbt-profile-schemas` | 1 |
+
 - `cargo build -p dbt-sa-cli`: clean
 
-Before the rebase, `dbt build` of a T-SQL-ported
-[jaffle-shop](https://github.com/dbt-labs/jaffle-shop) (seed, run, tests) ran
-against a local SQL Server 2022 container with SQL auth. Unit tests on models
-with CTEs fail (see below). Other auth modes are unit-tested in `dbt-auth` only;
-no Azure AD credentials were available.
+On SQL Server 2022 (16.0.4295.3) with SQL auth, a scratch project builds with
+`--full-refresh` and again without, 8/8 each time: a `check` snapshot over a
+`WITH` query, two incremental models, views, a unit test, and generic tests.
+On earlier commits of this branch (the fork PRs list each run):
+
+- **Generic tests:** passing, warning and failing ones are reported correctly,
+  and so are a singular test and `store_failures`.
+- **Incremental models:** a MERGE rerun, a widened column on rerun (on the
+  tip too, including one with an index and a default), and a type change
+  under `on_schema_change: sync_all_columns`.
+- **Other:** `persist_docs`, `drop_schema`, `run-operation` writes, and views
+  that are unchanged or have a changed source.
+
+Other auth modes are unit-tested in `dbt-auth` only; no Entra-enabled
+server was available.
 
 ## Known gaps outside this diff
 
@@ -174,13 +200,10 @@ Found while testing, not fixed here:
 
 - Unit tests fail for any model with its own CTEs: the unit-test renderer
   nests the model's `WITH` inside a CTE, which T-SQL rejects (Msg 156).
+- A model that refs an ephemeral model and doesn't start with `WITH` fails:
+  the shared CTE injection wraps it in `select * from ( … )` with no alias
+  (Msg 102).
 - `dbt.date_spine` fails on SQL Server (nested `WITH`, `order by 1`); the fix
   is a `sqlserver__date_spine` override in the adapter's macros.
 - `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects
   inside the test wrapper (dbt-labs/dbt-utils).
-- A model that refs an ephemeral model and doesn't start with `WITH` fails:
-  the shared CTE injection wraps it in `select * from ( … )` with no alias
-  (Msg 102).
-- `prefer_single_alter_column` is rejected as an unknown config key
-  (dbt1060), so column widening always takes the four-step rewrite. v1 1.12.0
-  widens within a type with a single `ALTER COLUMN` by default.

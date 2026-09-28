@@ -60,7 +60,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 
 | Draft | Live | What it is | Pending |
 |---|---|---|---|
-| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Fork PR #25 (1.12.0 macro sync) open; merges cleanly with `main` `3d61704d4`; live body and "Verified" behind the draft |
+| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Live body synced on `fa6731a42` (#25 merged); needs a maintainer to label CI; the known gaps are unfiled |
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |

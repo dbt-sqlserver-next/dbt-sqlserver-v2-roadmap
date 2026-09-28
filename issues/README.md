@@ -42,15 +42,15 @@ them by path. Update this index in the same change as a file's `status`.
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
 | [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Multi-statement batch returns the cleanup query's empty result | Fix PR #15766 unreviewed and conflicting; live body behind the draft |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
-| [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; a macro's `statement()` writes roll back on success | Untriaged |
+| [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Live body behind the draft (`--sql` path) |
 | [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
-| [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | With transactions on (1.12 default), `run-operation` writes are silently lost; workaround `adapter.commit_if_open()` | Waits on #16434 |
 | [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` | Fix PR #867 open |
 
 ## Closed
 
 | Draft | Live | Resolution |
 |---|---|---|
+| [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | Stopgap in #866 commits run-operation connections on success; remove once dbt-labs/dbt#16434 covers both paths |
 | [v2-test-result-bool-parsing-truthiness](v2-test-result-bool-parsing-truthiness.md) | [dbt-labs/dbt#15767](https://github.com/dbt-labs/dbt/issues/15767) | Fixed upstream in `712702b7e`; PR #15768 closed unmerged |
 | [v1-schema-concat-default-flip-for-v2-bridge](v1-schema-concat-default-flip-for-v2-bridge.md) | [dbt-msft/dbt-sqlserver#800](https://github.com/dbt-msft/dbt-sqlserver/issues/800) | Shipped in #811 (v1.12.0rc3) |
 | [v1-quoting-alignment-with-v2](v1-quoting-alignment-with-v2.md) | [dbt-msft/dbt-sqlserver#785](https://github.com/dbt-msft/dbt-sqlserver/issues/785) | Shipped in #795 (v1.12.0rc2) |

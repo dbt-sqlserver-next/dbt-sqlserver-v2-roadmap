@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/862
 related: v1-core-run-operation-never-commits.md
 ---

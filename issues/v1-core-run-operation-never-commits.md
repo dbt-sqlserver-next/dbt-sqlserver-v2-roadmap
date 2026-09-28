@@ -20,7 +20,15 @@ with adapter.connection_named("macro_{}".format(macro_name)):
     )
 ```
 
-Nothing commits after `execute_macro`. `statement()` defaults to
+`run-operation --sql` has the same gap in `_run_unsafe_sql`:
+
+```python
+with adapter.connection_named("inline_query"):
+    adapter.clear_transaction()
+    response, _ = adapter.execute(sql, auto_begin=True, fetch=False)
+```
+
+Nothing commits after `execute_macro` or `execute`. `statement()` defaults to
 `auto_begin=True`, so a macro that writes through it opens a transaction.
 Leaving the block calls `release()`, which closes the connection, and `close()`
 rolls back any open transaction. The macro succeeds, the command exits 0, and
@@ -66,9 +74,9 @@ whatever ran before the error.
 
 ## Fix
 
-Commit on success. `SQLConnectionManager.commit` raises when no transaction is
-open, which is the normal case for a macro that only uses `run_query`
-(`auto_begin=false`), so check first:
+Commit on success, in both blocks. `SQLConnectionManager.commit` raises when no
+transaction is open, which is the normal case for a macro that only uses
+`run_query` (`auto_begin=false`), so check first:
 
 ```python
 with adapter.connection_named("macro_{}".format(macro_name)):
@@ -79,6 +87,8 @@ with adapter.connection_named("macro_{}".format(macro_name)):
     if adapter.connections.get_thread_connection().transaction_open:
         adapter.connections.commit()
 ```
+
+and the same check after `adapter.execute(...)` in `_run_unsafe_sql`.
 
 A macro that raises still leaves the block through `release()` and rolls back.
 `run-operation` already opens a connection for every macro, through
@@ -93,6 +103,10 @@ PostgreSQL 16.15:
 | SQL Server, before | lost | kept | rolled back |
 | SQL Server, after | kept | kept | rolled back |
 | Postgres, before and after | kept | kept | kept (see above) |
+
+`--sql`, measured with dbt-core 1.12.3, dbt-sqlserver 1.12.0 and SQL Server
+2022: an `insert` is lost before and kept after; a batch that fails after its
+`insert` rolls back both times. dbt-sqlserver's own run-operation commit (dbt-msft/dbt-sqlserver#866) was disabled for the measurement.
 
 A log-only macro succeeds on both. Snowflake, BigQuery and Spark override
 `commit()` with a no-op, so the change does nothing there. That's from their

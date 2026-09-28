@@ -60,17 +60,17 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 |---|---|---|---|
 | [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Rebased on `main` and pushed (`46704326d`); live body behind the draft |
 | [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
-| [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Multi-statement batch returns the cleanup query's empty result | Fix PR #15766 unreviewed and conflicting; live body behind the draft |
+| [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Multi-statement batch returns the cleanup query's empty result | Fix PR #15766 unreviewed and conflicting; live body behind the draft (template) |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |
 | [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
-| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | A `check` snapshot with a `check_cols` list fails from its second run when its SQL starts with `WITH` | Fix PR #867 open |
 | [v1-unit-test-temp-table-left-behind](v1-unit-test-temp-table-left-behind.md) | [dbt-msft/dbt-sqlserver#874](https://github.com/dbt-msft/dbt-sqlserver/issues/874) | With transactions on, every unit test leaves an empty `__dbt_tmp` table; fix extends #866 to `unit_test.` connections | Fix not implemented |
 
 ## Closed
 
 | Draft | Live | Resolution |
 |---|---|---|
+| [v1-snapshot-check-cols-with-headed-query](v1-snapshot-check-cols-with-headed-query.md) | [dbt-msft/dbt-sqlserver#865](https://github.com/dbt-msft/dbt-sqlserver/issues/865) | Fixed in #867 |
 | [v1-run-operation-writes-rolled-back](v1-run-operation-writes-rolled-back.md) | [dbt-msft/dbt-sqlserver#862](https://github.com/dbt-msft/dbt-sqlserver/issues/862) | Stopgap in #866 commits run-operation connections on success; remove once dbt-labs/dbt#16434 covers both paths |
 | [v2-test-result-bool-parsing-truthiness](v2-test-result-bool-parsing-truthiness.md) | [dbt-labs/dbt#15767](https://github.com/dbt-labs/dbt/issues/15767) | Fixed upstream in `712702b7e`; PR #15768 closed unmerged |
 | [v1-schema-concat-default-flip-for-v2-bridge](v1-schema-concat-default-flip-for-v2-bridge.md) | [dbt-msft/dbt-sqlserver#800](https://github.com/dbt-msft/dbt-sqlserver/issues/800) | Shipped in #811 (v1.12.0rc3) |

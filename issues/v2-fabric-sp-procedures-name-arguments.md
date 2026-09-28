@@ -5,7 +5,14 @@ status: draft
 related: ../plan/02-implementation-steps.md
 ---
 
-# Fabric metadata passes relation names to `sp_tables` / `sp_columns` unquoted and as `LIKE` patterns
+# [v2 Bug] Fabric metadata passes relation names to `sp_tables` / `sp_columns` unquoted and as `LIKE` patterns
+
+### Is this a new bug in dbt v2.x compared to the latest version of dbt 1.x?
+
+- [X] I believe this is a new bug in dbt v2.x
+- [X] I have searched the existing issues and could not find a duplicate
+
+### Current Behavior
 
 Three calls in `dbt-adapter` build `EXEC` statements from relation names:
 
@@ -17,18 +24,22 @@ Three calls in `dbt-adapter` build `EXEC` statements from relation names:
 
 Two separate problems:
 
-1. **Bare arguments.** `EXEC` accepts an unquoted argument only if it's a
-   regular identifier. Anything else fails to parse, and a `'` opens a string
-   literal.
-2. **Patterns.** `@table_owner` and `@table_name` are `LIKE` patterns, so `_`,
-   `%` and `[` in a name match other objects. This includes the quoted call.
+1. **Bare arguments.** `EXEC` accepts an unquoted argument only if it's a regular identifier. Anything else fails to parse, and a `'` opens a string literal.
+2. **Patterns.** `@table_owner` and `@table_name` are `LIKE` patterns, so `_`, `%` and `[` in a name match other objects. This includes the quoted call.
 
-## Measured
+Consequences:
 
-SQL Server 2022 (16.0.4295.3, Linux), running the strings these `format!`s
-produce. I have no Fabric warehouse to test against.
+- `fabric_get_relation` errors when more than one row comes back ("Did not find 'TABLE_TYPE' for a relation").
+- `build_schema_from_sp_columns` appends every returned row, so a unit test's `given` schema silently gains the other table's columns.
+- `list_relations` fails for any schema that isn't a regular identifier.
 
-Bare vs quoted, `sp_columns` on `dbo.<name>`:
+### Expected Behavior
+
+Each call finds exactly the named relation, whatever characters its name contains.
+
+### Steps To Reproduce
+
+Run the strings these `format!`s produce against SQL Server. Bare vs quoted, `sp_columns` on `dbo.<name>`:
 
 | Name | Bare, as emitted | `N'...'` |
 |---|---|---|
@@ -41,8 +52,7 @@ Bare vs quoted, `sp_columns` on `dbo.<name>`:
 
 A schema `my-schema` in `list_relations` is Msg 102.
 
-Patterns, with schemas `ab_c` and `abXc`, and tables `ab`, `a[b`, `50%` and
-`50x` in `ab_c`:
+Patterns, with schemas `ab_c` and `abXc`, and tables `ab`, `a[b`, `50%` and `50x` in `ab_c`:
 
 | Arguments | Rows |
 |---|---|
@@ -52,22 +62,28 @@ Patterns, with schemas `ab_c` and `abXc`, and tables `ab`, `a[b`, `50%` and
 | `sp_tables @table_name = N'50%'` | `50%` and `50x` |
 | same, with `[_]`, `[[]`, `[%]` escapes | exactly the named object |
 
-Consequences:
+### Relevant log output
 
-- `fabric_get_relation` errors when more than one row comes back ("Did not find
-  'TABLE_TYPE' for a relation").
-- `build_schema_from_sp_columns` appends every returned row, so a unit test's
-  `given` schema silently gains the other table's columns.
-- `list_relations` fails for any schema that isn't a regular identifier.
+_No response_
 
-## Fix
+### Environment
 
-Quote every argument with `format_str` plus an `N` prefix. A plain `'...'` is
-`varchar`: on a code page 1252 database `'客户'` finds 0 rows in both
-procedures, while `N'客户'` finds 1. Then escape the two pattern arguments by
-wrapping `[`, `_` and `%` in brackets.
+- OS: Linux
+- CPU: x86
+- dbt distribution and version: `dbt-labs/dbt` `main` source; SQL Server 2022 (16.0.4295.3, Linux). No Fabric warehouse was available, so the procedures were run on SQL Server.
 
-`@fUsePattern = 0` isn't a general alternative. `sp_tables` accepts it, but
-with `@table_name = NULL` (as `list_relations` calls it) it returns 0 rows, and
-`sp_columns` has no such parameter ("@fUsePattern is not a parameter for
-procedure sp_columns").
+### Which database adapter are you using?
+
+other (describe in Additional Context)
+
+### Is this a discrepancy vs. dbt 1.x?
+
+- [ ] Yes — this works in dbt 1.x but not in dbt v2.x
+
+### Additional Context
+
+Adapter: Fabric (`dbt-adapter` `metadata/fabric`).
+
+Fix: quote every argument with `format_str` plus an `N` prefix. A plain `'...'` is `varchar`: on a code page 1252 database `'客户'` finds 0 rows in both procedures, while `N'客户'` finds 1. Then escape the two pattern arguments by wrapping `[`, `_` and `%` in brackets.
+
+`@fUsePattern = 0` isn't a general alternative. `sp_tables` accepts it, but with `@table_name = NULL` (as `list_relations` calls it) it returns 0 rows, and `sp_columns` has no such parameter ("@fUsePattern is not a parameter for procedure sp_columns").

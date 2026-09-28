@@ -84,6 +84,7 @@ it, as above; when it isn't, leave the diagram out.
   `Signed-off-by` unless asked.
 - Avoid manual newlines; let the formatter handle line breaks when its 
   a text for issues or PRs.
+- Write outward text as a contributor would: no promises of later work, no narration of what you did or will do. State a dependency plainly: "Depends on #868."
 
 ## Code
 
@@ -120,6 +121,7 @@ roadmap exists:
   redundant checks, or tests that cannot fail.
 - Keep throwaway checks and scratch databases out of the repo, and drop them
   when done.
+- Use mssql-python for connecting to SQL Server in tests and development.
 
 ## Where things live
 

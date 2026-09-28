@@ -1,7 +1,8 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: draft
+status: open
+url: https://github.com/dbt-labs/dbt/issues/16505
 related: https://github.com/dbt-msft/dbt-sqlserver/issues/166
 ---
 
@@ -53,7 +54,6 @@ The model builds, as it does in dbt 1.x, where the ephemeral CTE is prepended wi
 2. `dbt run -s use_eph`
 
 ### Relevant log output
-
 ```shell
 [error] [DbDriverFailed (dbt1308)]: Database Error in model use_eph (target/run/v2sync/models/use_eph.sql)
   [mssql] Could not execute query: Incorrect syntax near ';'. (ErrorNumber 102, State 1, Class 15, LineNo 10)
@@ -63,7 +63,7 @@ The model builds, as it does in dbt 1.x, where the ephemeral CTE is prepended wi
 
 - OS: Linux
 - CPU: x86
-- dbt distribution and version: `dbt-labs/dbt` `main` source (`3d61704d4`) with the SQL Server adapter from #15769; SQL Server 2022 (16.0.4295.3)
+- dbt distribution and version: `dbt-labs/dbt` `main` source (`242065240`) with the SQL Server adapter from #15769; SQL Server 2022 (16.0.4295.3)
 
 ### Which database adapter are you using?
 

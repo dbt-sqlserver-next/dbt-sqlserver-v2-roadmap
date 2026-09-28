@@ -18,23 +18,13 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- `sqlserver-v2-port` (`fa6731a42`) is on `upstream/main` `315bad676`, with
+- `sqlserver-v2-port` (`4d70a1069`) is on `upstream/main` `315bad676`, with
   fork PRs [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) to
-  [#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25) merged. #25
-  synced the macros with dbt-sqlserver 1.12.0 and widens columns with a single
-  `ALTER COLUMN` through `sqlserver__expand_target_column_types`. The #15766
-  pair was dropped; #15766 and #15765 are closed.
-- It merges into `upstream/main` `242065240` without conflicts. On `main`
-  `3d61704d4` (with #25's first commit) the merged tree also passed clippy,
-  the SQL Server crates' tests and a live build.
-- Fork PR [#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26)
-  (open) lifts a model's own CTEs into its unit test's `WITH` list, fixing
-  unit tests on models with their own `WITH` (and the schema probe for
-  ephemeral givens) without v1's views.
-  Once it merges, the body's "Known gaps" loses that line and "Decisions" gains
-  the `render_unit_test` branch.
-- The live body was synced on 2026-09-28 and matches the draft below, with
-  "Verified" re-run on `fa6731a42`.
+  [#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26) merged. #26
+  moves a model's own CTEs into its unit test's `WITH` list. The #15766 pair
+  was dropped; #15766 and #15765 are closed.
+- It merges into `upstream/main` `242065240` without conflicts.
+- The live body matches the draft below (synced 2026-09-28 after #26).
 - Upstream CI hasn't run on #15769: it's a public fork and needs the
   `ci:approve-public-fork-ci` label from a maintainer. CodeScene's one critical
   finding is `SqlServerDbConfig::set_field`, the same per-field `match` as
@@ -70,7 +60,7 @@ ten crate-scoped PRs
 ([#11](https://github.com/dbt-sqlserver-next/dbt-core/pull/11)–[#20](https://github.com/dbt-sqlserver-next/dbt-core/pull/20)),
 then fixes found by running it against SQL Server and comparing it with
 dbt-sqlserver 1.12.0
-([#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21)–[#25](https://github.com/dbt-sqlserver-next/dbt-core/pull/25)).
+([#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21)–[#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26)).
 Registering the adapter type makes every exhaustive `match adapter_type()`
 non-exhaustive, so it can't land upstream piecemeal without breaking
 `main`'s build in between. Each fork PR cites the v1 and live-server
@@ -138,6 +128,19 @@ with dbt-sqlserver 1.12.0. Changes from v1:
   running a different path. Dynamic data masking and denies aren't ported;
   they need `adapter.resolve_*`.
 
+**Unit tests**: `render_unit_test` has a `SqlServer` branch. It already
+branches per adapter: DuckDB and ClickHouse for schema inference, and
+Snowflake, BigQuery and Databricks for typing. T-SQL allows `WITH` only at
+the start of a statement, so a model with its own CTEs couldn't be the body
+of `<model>_actual` (Msg 156). v1's `sqlserver__get_unit_test_sql` creates
+the model as a view, but v2 doesn't call it. Instead, the model's CTEs are
+moved into the unit test's `WITH` list ahead of `<model>_actual`, which keeps
+the model's final statement. That's one query in the same shape every other
+adapter runs, with no DDL. `split_leading_ctes` (`dbt-jinja-utils`) finds
+where the model's CTE list ends. The expected-schema probe splices CTEs into
+the model's `WITH` for the same reason, because
+`sqlserver__get_empty_subquery_sql` drops a `WITH` header.
+
 **Not registered**: `adapter_specific_behavior_flags` returns `vec![]`.
 v1's behavior flags have no alternate v2 code path, so each stays at its
 v1 default, and nothing is declared that the adapter can't honor.
@@ -162,8 +165,9 @@ the fork PRs and in
 
 ## Verified
 
-On `fa6731a42` (based on `main` `315bad676`; it merges into `main`
-`242065240` without conflicts):
+On `fa6731a42`, with the crates #26 touched re-run on `4d70a1069`
+(based on `main` `315bad676`; it merges into `main` `242065240` without
+conflicts):
 
 - `cargo fmt --check`, and `cargo clippy --all-targets -D warnings` on the
   ten touched crates: clean
@@ -175,7 +179,8 @@ On `fa6731a42` (based on `main` `315bad676`; it merges into `main`
   | `dbt-schemas` | 683 |
   | `dbt-auth` | 329 |
   | `dbt-loader` | 243 |
-  | `dbt-tasks-sa` | 185 |
+  | `dbt-tasks-sa` | 188 |
+  | `dbt-jinja-utils` | 130 |
   | `dbt-adapter-sql` | 41 |
   | `dbt-adapter-core` | 17 |
   | `dbt-init` | 7 |
@@ -187,6 +192,8 @@ On `fa6731a42` (based on `main` `315bad676`; it merges into `main`
 On SQL Server 2022 (16.0.4295.3) with SQL auth, a scratch project builds with
 `--full-refresh` and again without, 8/8 each time: a `check` snapshot over a
 `WITH` query, two incremental models, views, a unit test, and generic tests.
+Unit tests on models with their own CTEs pass, including one with an
+ephemeral input, and a wrong expectation fails with the expected diff.
 On earlier commits of this branch (the fork PRs list each run):
 
 - **Generic tests:** passing, warning and failing ones are reported correctly,
@@ -204,8 +211,6 @@ server was available.
 
 Found while testing, not fixed here:
 
-- Unit tests fail for any model with its own CTEs: the unit-test renderer
-  nests the model's `WITH` inside a CTE, which T-SQL rejects (Msg 156).
 - A model that refs an ephemeral model and doesn't start with `WITH` fails:
   the shared CTE injection wraps it in `select * from ( … )` with no alias
   (Msg 102).
@@ -213,3 +218,4 @@ Found while testing, not fixed here:
   is a `sqlserver__date_spine` override in the adapter's macros.
 - `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects
   inside the test wrapper (dbt-labs/dbt-utils).
+

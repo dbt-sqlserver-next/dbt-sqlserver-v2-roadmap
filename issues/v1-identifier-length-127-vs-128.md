@@ -63,6 +63,16 @@ its own issue.
 The v2 adapter uses 128 (`dbt-adapter-sql` `ident.rs`, `SqlServer` arm), so
 until this lands a 128-character name fails under v1 and builds under v2.
 
+## Generated index name
+
+`sqlserver__create_clustered_columnstore_index` names the index `<schema>_<identifier>_cci`, which passes 128 characters while the relation is still under the limit. A 44-character schema and a 95-character model fail:
+
+```
+The identifier that starts with 'scratch_qw_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_ttttt…' is too long. Maximum length is 128.
+```
+
+Index names are scoped to the table, so any name that fits works. Keeping the current name up to 128 characters, and shortening it with a hash of the full name above that, leaves existing indexes untouched. Measured on SQL Server 2022 (16.0.4295.3), mssql-python, v1.12.0.
+
 ## References
 
 - https://learn.microsoft.com/sql/relational-databases/databases/database-identifiers

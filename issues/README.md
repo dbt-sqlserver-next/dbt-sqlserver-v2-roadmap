@@ -50,9 +50,18 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v2-sqlserver-normalize-component-collation-fold](v2-sqlserver-normalize-component-collation-fold.md) | dbt-sqlserver-next/dbt-core | `normalize_component` lowercases regardless of collation | Needs a design decision |
 | [v2-date-spine-nested-cte-tsql](v2-date-spine-nested-cte-tsql.md) | dbt-msft/dbt-sqlserver | `date_spine` fails on SQL Server (nested `WITH`, `order by 1`); `sqlserver__date_spine` override | — |
 | [v1-varchar-name-literals-non-codepage](v1-varchar-name-literals-non-codepage.md) | dbt-msft/dbt-sqlserver | `varchar` name literals break table and incremental models named outside the code page | — |
-| [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128 | — |
+| [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128; the columnstore index name can exceed 128 | — |
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |
+| [v1-utils-macros-edge-cases](v1-utils-macros-edge-cases.md) | dbt-msft/dbt-sqlserver | `date_trunc` returns `DATE` below day; `split_part` fails on `&` and cuts parts at 128; `len` drops trailing spaces; `listagg` ignores `limit_num` | — |
+| [v1-column-ddl-on-schema-change](v1-column-ddl-on-schema-change.md) | dbt-msft/dbt-sqlserver | Widening a column drops `NOT NULL`; a snapshot can't add a keyword-named column; the safe-expansion row count runs on every run | — |
+| [v1-database-and-object-name-quoting](v1-database-and-object-name-quoting.md) | dbt-msft/dbt-sqlserver | Names with `;`, `'`, `-` or `&` break the connection string, `drop_schema`, `get_provision_sql`, `get_tables_by_pattern_sql` and the `drop_*` macros | — |
+| [v1-seed-column-types](v1-seed-column-types.md) | dbt-msft/dbt-sqlserver | Seeds overflow `int` and `varchar(8000)` | — |
+| [v1-mssql-python-minimum-version](v1-mssql-python-minimum-version.md) | dbt-msft/dbt-sqlserver | The `mssql` extra allows mssql-python versions (1.7.1 to 1.14.0) that fail seeds with 16-digit decimals | — |
+| [v1-delete-insert-predicates-alias](v1-delete-insert-predicates-alias.md) | dbt-msft/dbt-sqlserver | `delete+insert` predicates can't use `DBT_INTERNAL_DEST` | — |
+| [v1-show-trailing-order-by](v1-show-trailing-order-by.md) | dbt-msft/dbt-sqlserver | `dbt show` fails when the query ends in `order by` | — |
+| [v1-persist-docs-truncation](v1-persist-docs-truncation.md) | dbt-msft/dbt-sqlserver | `persist_docs` cuts descriptions at 3750 characters without a warning | — |
+| [v1-readme-document-known-limits](v1-readme-document-known-limits.md) | dbt-msft/dbt-sqlserver | README states no limits for `hash`, `split_part` type, `listagg` size, snapshot hash and data-test views | — |
 
 ## Filed, open
 

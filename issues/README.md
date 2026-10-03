@@ -54,11 +54,9 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |
 | [v1-utils-macros-edge-cases](v1-utils-macros-edge-cases.md) | dbt-msft/dbt-sqlserver | `date_trunc` returns `DATE` below day; `split_part` fails on `&` and cuts parts at 128; `len` drops trailing spaces; `listagg` ignores `limit_num` | — |
-| [v1-column-ddl-on-schema-change](v1-column-ddl-on-schema-change.md) | dbt-msft/dbt-sqlserver | Widening a column drops `NOT NULL`; a snapshot can't add a keyword-named column; the safe-expansion row count runs on every run | — |
+| [v1-type-expansion-row-count](v1-type-expansion-row-count.md) | dbt-msft/dbt-sqlserver | The safe-expansion row count runs on every incremental and snapshot run | — |
 | [v1-database-and-object-name-quoting](v1-database-and-object-name-quoting.md) | dbt-msft/dbt-sqlserver | Names with `;`, `'`, `-` or `&` break the connection string, `drop_schema`, `get_provision_sql`, `get_tables_by_pattern_sql` and the `drop_*` macros | — |
-| [v1-seed-column-types](v1-seed-column-types.md) | dbt-msft/dbt-sqlserver | Seeds overflow `int` and `varchar(8000)` | — |
 | [v1-mssql-python-minimum-version](v1-mssql-python-minimum-version.md) | dbt-msft/dbt-sqlserver | The `mssql` extra allows mssql-python versions (1.7.1 to 1.14.0) that fail seeds with 16-digit decimals | — |
-| [v1-delete-insert-predicates-alias](v1-delete-insert-predicates-alias.md) | dbt-msft/dbt-sqlserver | `delete+insert` predicates can't use `DBT_INTERNAL_DEST` | — |
 | [v1-show-trailing-order-by](v1-show-trailing-order-by.md) | dbt-msft/dbt-sqlserver | `dbt show` fails when the query ends in `order by` | — |
 | [v1-persist-docs-truncation](v1-persist-docs-truncation.md) | dbt-msft/dbt-sqlserver | `persist_docs` cuts descriptions at 3750 characters without a warning | — |
 | [v1-readme-document-known-limits](v1-readme-document-known-limits.md) | dbt-msft/dbt-sqlserver | README states no limits for `hash`, `split_part` type, `listagg` size, snapshot hash and data-test views | — |
@@ -75,6 +73,9 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |
 | [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
 | [v1-unit-test-temp-table-left-behind](v1-unit-test-temp-table-left-behind.md) | [dbt-msft/dbt-sqlserver#874](https://github.com/dbt-msft/dbt-sqlserver/issues/874) | With transactions on, every unit test leaves an empty `__dbt_tmp` table; adapter wraps the `unit` materialization and commits | Fix PR #875 open |
+| [v1-column-ddl-on-schema-change](v1-column-ddl-on-schema-change.md) | [dbt-msft/dbt-sqlserver#881](https://github.com/dbt-msft/dbt-sqlserver/issues/881) | Widening a column drops `NOT NULL`; a snapshot can't add a column that needs quoting | Fix PR #884 open; 1.11 backport in #887 |
+| [v1-delete-insert-predicates-alias](v1-delete-insert-predicates-alias.md) | [dbt-msft/dbt-sqlserver#882](https://github.com/dbt-msft/dbt-sqlserver/issues/882) | `delete+insert` predicates can't use `DBT_INTERNAL_DEST` | Fix PR #885 open; master only |
+| [v1-seed-column-types](v1-seed-column-types.md) | [dbt-msft/dbt-sqlserver#883](https://github.com/dbt-msft/dbt-sqlserver/issues/883) | Seeds overflow `int` and `varchar(8000)` | Fix PR #886 open; 1.11 backport in #887 |
 
 ## Closed
 

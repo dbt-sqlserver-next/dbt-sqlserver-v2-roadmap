@@ -1,41 +1,55 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: draft
-related: ../plan/04-testing-and-validation.md
+status: open
+url: https://github.com/dbt-msft/dbt-sqlserver/issues/883
+related: v1-mssql-python-minimum-version.md
 ---
 
 # Seeds overflow `int` and `varchar(8000)`
 
-Measured on SQL Server 2022 (16.0.4295.3, Linux), mssql-python backend, against v1.12.0.
+A seed column of whole numbers is always created as `int`, and a text column as `varchar(<longest value in bytes>)`. A value beyond `int`, or text longer than 8,000 bytes, fails the seed:
 
-`convert_number_type` returns `int` for a column without decimals, and `convert_text_type` returns `varchar(<longest value in bytes>)`.
-
-| Seed | Result |
+| Seed | Error |
 |---|---|
-| `amt` = `5000000000` | `The conversion of the varchar value '5000000000' overflowed an int column.` |
-| `t` = 9,000 `x` characters | `The size (9000) given to the column 't' exceeds the maximum allowed for any data type (8000).` |
+| `n` = `5000000000` | `The conversion of the varchar value '5000000000' overflowed an int column.` |
+| `n` = `9223372036854775808` | `Arithmetic overflow error converting expression to data type int.` |
+| `t` = 9,000 characters | `The size (9000) given to the column 't' exceeds the maximum allowed for any data type (8000).` |
 
-With `column_types`, `bigint` loads `9223372036854775807` and `-3000000000`, and `numeric(38,0)` loads `9223372036854775808`. `int` stays for columns within `-2147483648..2147483647` (both ends load today), so existing seeds keep their type. `convert_number_type` can check the column's minimum and maximum and return `int`, `bigint` (within 64 bits) or `numeric(38,0)`; `convert_text_type` can return `varchar(max)` above 8,000 bytes. A column with decimals stays `float`.
+`bigint` for whole numbers beyond `int`, `numeric(38,0)` beyond `bigint`, and `varchar(max)` above 8,000 bytes load all three. Columns that load today would keep their type.
 
 ## Steps to reproduce
 
-```
-# seeds/big_int.csv
-id,amt
+```text
+# seeds/bigints.csv
+id,n
 1,5000000000
 ```
 
-```
-# seeds/long_txt.csv: t is 9000 characters
+```text
+# seeds/long_text.csv: t is 9000 characters
 id,t
 1,xxxx…
 ```
 
-`dbt seed` fails on both.
+`dbt seed`.
 
 ## Environment
 
 - Database: SQL Server 2022 (16.0.4295.3), Linux, Developer Edition
-- Backend: mssql-python
-- dbt-sqlserver: v1.12.0
+- Backend: mssql-python 1.14.0 and pyodbc (ODBC Driver 18)
+- Authentication, ODBC driver, OS: SQL login, ODBC Driver 18, Linux
+- Database collation: SQL_Latin1_General_CP1_CS_AS
+- Other dbt packages: none
+
+`dbt --version`:
+```text
+Core: 1.12.3
+dbt-sqlserver: 1.12.0
+```
+
+## Log excerpt
+```text
+Database Error in seed bigints (seeds/bigints.csv)
+  Driver Error: Numeric value out of range; DDBC Error: [Microsoft][SQL Server]The conversion of the varchar value '5000000000' overflowed an int column.
+```

@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/883
 related: v1-mssql-python-minimum-version.md
 ---

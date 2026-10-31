@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/882
 related: ../plan/04-testing-and-validation.md
 ---

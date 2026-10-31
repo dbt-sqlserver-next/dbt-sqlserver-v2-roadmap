@@ -1,7 +1,7 @@
 ---
 target_repo: dbt-msft/dbt-sqlserver
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-msft/dbt-sqlserver/issues/874
 related: v1-core-unit-test-cleanup-rolled-back.md, v1-run-operation-writes-rolled-back.md
 ---

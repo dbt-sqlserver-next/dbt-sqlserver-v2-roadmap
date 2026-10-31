@@ -76,6 +76,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-column-ddl-on-schema-change](v1-column-ddl-on-schema-change.md) | [dbt-msft/dbt-sqlserver#881](https://github.com/dbt-msft/dbt-sqlserver/issues/881) | Widening a column drops `NOT NULL`; a snapshot can't add a column that needs quoting | Fix PR #884 open; 1.11 backport in #887 |
 | [v1-delete-insert-predicates-alias](v1-delete-insert-predicates-alias.md) | [dbt-msft/dbt-sqlserver#882](https://github.com/dbt-msft/dbt-sqlserver/issues/882) | `delete+insert` predicates can't use `DBT_INTERNAL_DEST` | Fix PR #885 open; master only |
 | [v1-seed-column-types](v1-seed-column-types.md) | [dbt-msft/dbt-sqlserver#883](https://github.com/dbt-msft/dbt-sqlserver/issues/883) | Seeds overflow `int` and `varchar(8000)` | Fix PR #886 open; 1.11 backport in #887 |
+| [v1-drop-python-310](v1-drop-python-310.md) | [dbt-msft/dbt-sqlserver#897](https://github.com/dbt-msft/dbt-sqlserver/issues/897) | Remove Python 3.10 soft-installability now that it is end-of-life | Untriaged |
 
 ## Closed
 

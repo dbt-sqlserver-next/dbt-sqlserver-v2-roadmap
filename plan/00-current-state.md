@@ -1,272 +1,37 @@
 # 00 — Current State Audit
 
-Audited against local checkouts:
-- `dbt-core/` @ commit `f4c63ccca244a2f28456deaef2d91ee539c99d3a` (branch `main`)
-- `dbt-sqlserver/` @ commit `1f3332c` (branch `master`, v1.12.0rc2)
+Audited against local checkouts on 2026-10-31:
 
-Every file and symbol below was checked against those checkouts. When they
-move, the fix is re-auditing and bumping the hashes, not loosening the
-references. References name the function, constant or variant rather than a
-line number, so a grep re-verifies them and an edit upstream doesn't silently
-invalidate them — see `../AGENTS.md`.
+- `dbt-core/` @ `bad853106461c975757a8d2510c63cdb29eb4c66` (`sqlserver-v2-port`), merging port head `4d70a106` with upstream `main` `b601ffe4`.
+- `dbt-sqlserver/` @ `2875db81103d9df6aaba4f2d1503fe2b69897f44` (`chore/1.12.2rc1`, `v1.12.1-10-g`). This checkout was not changed by the V2 refresh.
+- Live verification server: SQL Server 2022 `16.0.4295.3`, local test instance.
 
-### v1 behavior this plan depends on
+## V2 port status
 
-- **Identifiers render as `"double quotes"`**, with an embedded `"` escaped by
-  doubling, and a unit test that fails the build if a hand-formatted bracket
-  identifier reappears ([#795](https://github.com/dbt-msft/dbt-sqlserver/pull/795),
-  closing #785 and #409). v1 and v2 agree here, so macro bodies port without a
-  quoting rewrite — see `03-macros-porting-map.md` and `05` #1.
-- **`SET XACT_ABORT ON` is issued on every connection**
-  (`sqlserver_connections.py` `_apply_session_settings`) — the only
-  session-level `SET` v1 sets, and input for the init SQL in Step 5.4.
-- **Native string types are the default** as of 1.12.0
-  (`dbt_sqlserver_use_native_string_types`): `STRING` → `VARCHAR(MAX)`,
-  `NVARCHAR` → `NVARCHAR(4000)`, `NCHAR` → `NCHAR(1)`. The legacy
-  `VARCHAR(8000)`/`CHAR(1)` mappings are deprecated; `sql_types.rs` should match
-  the current ones, not Fabric's.
-- **Catalog reads carry `(nolock)` and temp-relation catalog DDL stays out of
-  the ambient transaction** (`f0afd9f`, `75e9345`, `4ceca61`), fixing a
-  concurrent-incremental deadlock. The Rust catalog module re-implements these
-  reads and inherits the problem otherwise.
+The local port is implemented as one compiled adapter slice; it is not a standalone PyPI adapter.
 
-> Note: the guide refers to a `dbt-xdbc` crate. Here the equivalent is
-> **`dbt-adbc`** (`crates/dbt-adbc/`). Read every `dbt-xdbc` reference as
-> `dbt-adbc`, and re-check `crates/` in case it's renamed upstream.
+| Surface | Current implementation |
+|---|---|
+| Adapter identity | `AdapterType::SqlServer`, quoting, relation factory and SQL dialect arms are implemented. |
+| Profile and init | `SqlServerDbConfig`, headless and interactive profile setup support SQL login and the implemented Entra flows. |
+| Connectivity | `Backend::SQLServer` uses ADBC; current `MSSQLSERVER_DRIVER_VERSION` is `1.7.1`. |
+| Runtime/catalog | SQL Server relation lookup, catalog introspection, type mapping, column construction, adapter behavior and macro package are present. |
+| SQL Server macros | Vendored `dbt-sqlserver` macros include selected fixes beyond the original v1 1.12.0 sync: IDENTITY-safe empty table creation, aliased delete+insert, nullability-preserving type changes, quoted snapshot columns, and non-executing CTE schema discovery. |
+| Unit-test CTEs | Model CTEs are spliced into the unit-test query where SQL Server cannot nest a `WITH`; the non-leading-`WITH` ephemeral wrapper has an alias. |
 
-## 1. `AdapterType` enum — `crates/dbt-adapter-core/src/lib.rs`
+The adapter remains behind `DBT_ALLOW_EXPERIMENTAL_ADAPTERS=true`. Local changes have not been pushed. Live PR [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) must be refreshed separately; it still points at the old remote branch head until then.
 
-```rust
-pub enum AdapterType {
-    Snowflake, Bigquery, Databricks, Redshift, Spark, DuckDB,
-    Postgres, Salesforce, Fabric, ClickHouse, Exasol, Athena,
-    Starburst, Trino, Datafusion, Dremio, Oracle, Alt,
-}
-```
+## Verification
 
-No `SqlServer` variant — this is the first thing to add (Step 5.1). `Fabric` is
-the T-SQL sibling; use its `quote_char` arm as the template (double quote, like
-most warehouses, and what v1 emits too — `05` #1).
+- `cargo check` for the adapter, profile, init, loader, Jinja, task and CLI crates passed.
+- `cargo clippy` for those crates and all targets passed with warnings denied.
+- Relevant Rust tests passed: adapter `1588/1588` (with Arrow IPC LZ4 enabled and one test thread), loader `258/258`, tasks `285/285`, profile schemas `3/3`, init `7/7`, Jinja utilities `161/161`, adapter core `20/20` plus one ignored, SQL adapter `46/46`, auth `353/353` plus three ignored, schemas `708/708` plus one ignored.
+- On SQL Server 2022, the rebuilt V2 CLI connected successfully. Live dbt runs verified full-refresh from an IDENTITY source, composite-key delete+insert, varchar widening with `NOT NULL` and data preserved, a four-step non-null type rewrite, snapshot migration of a reserved-word column, non-leading-WITH ephemeral references, and semicolon-prefixed CTE schema discovery without evaluating a divide-by-zero query.
+- All scratch objects were dropped after testing.
 
-The enum is also why SQL Server is absent from the
-[supported-adapter list](https://docs.getdbt.com/docs/dbt-versions/core-upgrade/upgrading-to-v2?version=2.0)
-in the upgrade guide, where Snowflake is GA, BigQuery/Databricks/Redshift are
-Preview and Spark/DuckDB are Beta.
+## Remaining gaps
 
-## 2. ADBC driver registration — `crates/dbt-adbc/src/driver.rs`, `install.rs`
-
-**Already implemented.** `Backend::SQLServer` exists end-to-end:
-
-- `driver.rs` — `Backend` enum variant `SQLServer`, its `Display` impl
-  (`write!(f, "SQL Server")`), and `adbc_library_name`
-  (`Some("adbc_driver_mssql")`)
-- `driver.rs` `try_load_driver_internal` — included in the CDN-distributed
-  backend list alongside Snowflake, BigQuery, ClickHouse, Postgres,
-  Databricks, Redshift, DuckDB, DuckDB Extended, Salesforce, Spark
-- `install.rs` — listed in `INSTALLABLE_DRIVERS`, with the CDN download
-  URL/version in `backend_name_and_version` (`mssql` /
-  `MSSQLSERVER_DRIVER_VERSION`) and a macOS x86_64 special case shared with
-  ClickHouse
-- `repl.rs` `parse_backend` — `"sqlserver" | "mssql" => Ok(Backend::SQLServer)`
-  (adbc REPL alias)
-
-Nothing to do here unless the driver needs connection parameters it doesn't yet
-expose (the `apply_connection_args` gap in §3).
-
-This is the same driver v1 speaks to, not merely an architecturally similar
-one. v1's `adbc` backend
-([PR #783](https://github.com/dbt-msft/dbt-sqlserver/pull/783), commit
-`bca9e3e`) — a third option alongside `pyodbc` and `mssql-python` — opens
-`adbc_driver_manager.connect(driver="mssql", ...)` against the same
-`adbc_driver_mssql`/`go-mssqldb` pair, which is why it closes the
-`apply_connection_args` gaps in §3.
-
-## 3. Auth module — `crates/dbt-auth/src/sqlserver/mod.rs` (337 lines)
-
-**Already implemented, with unit tests.** Supports:
-
-- `ActiveDirectoryServicePrincipal` (alias `ServicePrincipal`) — tenant_id,
-  client_id, client_secret → `fedauth=ActiveDirectoryServicePrincipal`
-- `ActiveDirectoryPassword` — UID/PWD + client_id → `fedauth=ActiveDirectoryPassword`
-- `environment` — reads standard `AZURE_*` env vars via
-  [`EnvironmentCredential`](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/azidentity#EnvironmentCredential)
-  → `fedauth=ActiveDirectoryEnvironment`
-- Connection URI: `sqlserver://{host}:{port}?database={database}`, default port
-  `1433` (`DEFAULT_PORT` const)
-- Dispatch wired: `crates/dbt-auth/src/lib.rs` `auth_for_backend` —
-  `Backend::SQLServer => Box::new(sqlserver::SQLServerAuth {})`
-
-**Explicitly stubbed as `unimplemented!()`** in `parse_auth`:
-`ActiveDirectoryInteractive`, `ActiveDirectoryIntegrated`, `CLI`, `auto`.
-
-**Gaps relative to v1** (`sqlserver_credentials.py`, `sqlserver_auth.py`): v1
-also supports plain SQL auth (`authentication: sql` — username/password against
-a native SQL Server login, not Entra) and Windows integrated auth via
-`trusted_connection`. Neither is in the v2 module. Plain SQL auth is the most
-common on-prem mode, so without it the adapter serves only Azure SQL/Entra
-targets; it's in scope for the initial PR (`05` #2).
-
-`apply_connection_args` has `// TODO` comments for: connection timeout, dial
-timeout, `encrypt`, app name, log, retries — all standard `go-mssqldb` DSN
-params (https://github.com/microsoft/go-mssqldb#connection-parameters-and-dsn).
-`encrypt` in particular matters for on-prem servers without valid TLS certs
-(`encrypt=disable` / `TrustServerCertificate` equivalent).
-
-**These are not open design questions — v1's new ADBC backend already solved
-them against the same driver.**
-`dbt-sqlserver/dbt/adapters/sqlserver/sqlserver_backend.py`
-`build_adbc_connection_uri` builds exactly this query string:
-
-```python
-query_parts = [
-    f"database={urllib.parse.quote(database, safe='')}",
-    f"encrypt={str(credentials.encrypt).lower()}",
-    f"TrustServerCertificate={str(credentials.trust_cert).lower()}",
-]
-if credentials.login_timeout and credentials.login_timeout > 0:
-    query_parts.append(f"connection timeout={credentials.login_timeout}")
-```
-
-with defaults from `SQLServerCredentials`:
-`encrypt: Optional[bool] = True`, `trust_cert: Optional[bool] = False`,
-`login_timeout: Optional[int] = 0` (0 = driver default, no explicit param
-appended). It also URL-encodes user/password (`urllib.parse.quote(..., safe='')`)
-and special-cases named instances (host containing `\\`, port omitted) —
-both worth checking against v2's `apply_connection_args`, which currently
-only handles `host:port` unconditionally. **Port these three params
-(`encrypt`, `TrustServerCertificate`, `connection timeout`) and their
-defaults directly** into `crates/dbt-auth/src/sqlserver/mod.rs` rather than
-re-deriving them from `go-mssqldb`'s docs from scratch — v1's ADBC backend is
-a working, merged reference for the exact same driver.
-
-## 4. Profile config — `crates/dbt-schemas/src/schemas/profiles.rs`
-
-```rust
-pub enum DbConfig {
-    Redshift(...), Snowflake(...), Postgres(...), Bigquery(...), Trino(...),
-    Datafusion(...),
-    // SqlServer,          <-- commented placeholder only
-    // SingleStore,
-    Spark(...), Databricks(...), Salesforce(...), DuckDB(...), Alt(...),
-    Exasol(...),
-    // Oracle,
-    // Synapse,
-    Fabric(Box<FabricDbConfig>),
-    // Dremio,
-    ClickHouse(...),
-    ...
-}
-```
-
-No `SqlServerDbConfig` struct exists. `FabricDbConfig` (same file) is the
-closest template — check its field list (host, database, authentication,
-tenant_id/client_id/client_secret, port, schema, threads, etc.) and diff
-against what `sqlserver/mod.rs`'s `parse_auth`/`apply_connection_args` actually
-read via `config.get_str(...)` / `config.require_str(...)`, since those calls
-are the real source of truth for required field names.
-
-## 5. Adapter layer — `crates/dbt-adapter/src/**`
-
-No `SqlServer` arms anywhere; `Fabric` arms exist in every file that will need
-a `SqlServer` arm added alongside:
-
-| File | Fabric arm(s) | What it controls |
-|---|---|---|
-| `src/relation/relation_impl.rs` | `get_database` (database-required list), `get_canonical_fqn`'s three db/schema/identifier arms, and the `new_fabric` static constructor. Note `include_policy` needs nothing: Fabric falls through to `Policy::trues()`, which is already 3-part | relation rendering and construction |
-| `src/relation/factory.rs` | included in `create_static_relation` match | wires `AdapterType` to `RelationStatic` |
-| `src/sql_types.rs` (16 `Fabric` mentions) | type-name mapping (`real`, `float`, `bit`, `datetime2(6)`, `time(6)`, `varchar`), metadata key, row-size limits (VARCHAR ≤ 8000 bytes), explicit "INTERVAL/ARRAY not supported" errors | Arrow↔SQL type mapping, per-warehouse type quirks |
-| `src/column/column_builder.rs` | `Fabric => Ok(Self::build_fabric(field, type_ops))` in `ColumnBuilder::build`, plus the dedicated `build_fabric` fn | Arrow record batch → dbt `Column` object |
-| `src/metadata/get_relation.rs` | `AdapterType::Fabric => fabric_get_relation(...)` | single-relation catalog lookup |
-| `src/metadata/fabric/mod.rs` | 346-line module: full catalog introspection (`INFORMATION_SCHEMA`/`sys.*` queries) | model for `metadata/sqlserver/mod.rs` |
-| `src/adapter/adapter_impl.rs` | 44 occurrences across ~15 functions (`list_schemas`, `valid_incremental_strategies`, `get_adbc_execute_options`, `alter_table_add_columns`, `is_replaceable`, `truncate_relation`, `get_constraint_support`, grants/masking helpers, etc.) | most of the exhaustive per-warehouse behavior surface |
-
-`valid_incremental_strategies` for Fabric (`adapter_impl.rs`) is
-`&[Append, DeleteInsert, Merge, Microbatch]`, and v1's
-`SQLServerAdapter.valid_incremental_strategies` (`sqlserver_adapter.py`)
-returns `["append", "delete+insert", "merge", "microbatch"]` — the same set, so
-the arm is a direct copy.
-
-**Action:** for every `Fabric =>` arm found by `grep -n "Fabric" crates/dbt-adapter/src -r`,
-decide: (a) copy the same behavior for `SqlServer`, (b) diverge because classic
-SQL Server lacks a Fabric/Synapse-only feature (e.g. OneLake, certain
-distributed-warehouse DDL), or (c) diverge because SQL Server supports something
-Fabric doesn't (e.g. `IDENTITY` columns, full DML `MERGE`, clustered/nonclustered
-indexes beyond columnstore, `sp_rename`, `sql_variant`). Track these
-in `05-open-questions-and-risks.md` as they're found — the compiler will
-enumerate the full list once `AdapterType::SqlServer` exists (Step 5.1).
-
-## 6. Jinja macros — `crates/dbt-loader/src/dbt_macro_assets/`
-
-Packages present: `dbt-adapters` (115 files, the shared base), `dbt-alt`,
-`dbt-bigquery`, `dbt-clickhouse`, `dbt-databricks`, `dbt-duckdb`, `dbt-exasol`,
-`dbt-fabric`, `dbt-fabricspark`, `dbt-postgres`, `dbt-redshift`,
-`dbt-salesforce`, `dbt-snowflake`, `dbt-spark`. No `dbt-sqlserver/`.
-
-How it works (`crates/dbt-loader/src/load_packages.rs`):
-
-- `#[derive(RustEmbed)] #[folder = "src/dbt_macro_assets/"]` compiles the whole
-  directory into the `dbt` binary; packages are synced to disk and loaded per run.
-- `internal_package_names()` selects the package **by name alone**:
-  `format!("dbt-{adapter_type}")` plus the shared `dbt-adapters`. So
-  `AdapterType::SqlServer` automatically looks for `dbt-sqlserver/` — no
-  registration list to edit, just the directory and a `dbt_project.yml`
-  (`name: dbt_sqlserver`, `macro-paths: ["macros"]`) and an `__init__.py`.
-- Package size is a choice, not a contract: `dbt-fabric` ships 42 files,
-  `dbt-exasol` ships 2 (`dbt_project.yml` + `macros/adapters.sql`).
-
-Two consequences for the port (`03-macros-porting-map.md`, `05` #1):
-
-1. **The macros are reused, not rewritten.** `dbt-fabric/macros/adapters/schema.sql`
-   in v2 is byte-identical to `microsoft/dbt-fabric`'s
-   `dbt/include/fabric/macros/adapters/schema.sql` (diffed). The
-   `dbt_macro_assets/README.md` says as much: "All adapter macros are currently
-   maintained in dbt-labs/dbt-adapters / databricks/dbt-databricks", with a
-   changelog of vendored upstream commits.
-2. **The vendored bodies still hand-format `[bracket]` identifiers** —
-   `USE [{{ relation.database }}]`, `EXEC('CREATE SCHEMA [{{ ... }}]')`,
-   `{{ "["~column~"]" }}` — in `dbt-fabric/`'s `schema.sql`, `metadata.sql`,
-   `indexes.sql`, `create_table_as.sql`, `unit_test_create_table_as.sql`, even
-   though `AdapterType::Fabric`'s `quote_char` is `'"'`. `quote_char` governs
-   relation rendering, not macro bodies.
-
-The v1 `dbt-sqlserver/dbt/include/sqlserver/macros/` tree (34 `.sql` files) is
-the porting source — see `03-macros-porting-map.md`.
-
-## 7. `dbt init` interactive setup (optional, Step 5.3.1)
-
-`crates/dbt-init/src/adapter_config/fabric_config.rs` exists as the pattern.
-`crates/dbt-init/src/profile_setup.rs` — check `get_available_adapters()` for
-whether `Fabric` is listed there yet as a template to copy for `SqlServer`.
-
-## 8. v1 adapter inventory (porting source) — `dbt-sqlserver/`
-
-```
-dbt/adapters/sqlserver/
-  sqlserver_adapter.py       — SQLServerAdapter class (class shape not needed; behavior moves to Rust match arms).
-                               Exception: its `quote()` override (added by #795) is the escaping rule v2 must
-                               match — `ab"cd` → `"ab""cd"`. See 05 #1.
-  sqlserver_auth.py          — auth flows (compare against crates/dbt-auth/src/sqlserver/mod.rs gaps)
-  sqlserver_backend.py
-  sqlserver_column.py        — column/type mapping (source for sql_types.rs / column_builder.rs arms).
-                               Note the 1.12 default flip to native string types (VARCHAR(MAX)/NVARCHAR(4000)).
-  sqlserver_configs.py       — incremental/materialization config (source for adapter_impl.rs arms)
-  sqlserver_connections.py   — connection mgmt (NOT needed — ADBC driver replaces this entirely).
-                               Exception: the session `SET XACT_ABORT ON` it issues on connect
-                               which is init-SQL input for Step 5.4.
-  sqlserver_constants.py
-  sqlserver_credentials.py   — profile fields (source for SqlServerDbConfig struct)
-  sqlserver_helpers.py
-  sqlserver_mask.py          — data masking support (apply_masks.sql — SQL Server-specific feature, check if in scope)
-  sqlserver_relation.py      — relation/quoting logic (source for relation_impl.rs arm + Policy).
-                               Its `quoted()` override escapes embedded delimiters — same rule as `quote()` above.
-  sqlserver_runtime.py
-  relation_configs/          — relation config parsing (indexes, etc.)
-
-dbt/include/sqlserver/macros/   — 34 .sql files, full mapping in 03-macros-porting-map.md
-```
-
-Per the guide's "What doesn't exist in v2" list, skip porting: connection
-management (`sqlserver_connections.py`), the adapter class hierarchy
-(`sqlserver_adapter.py`'s class shape — only its *behavior* matters, expressed
-as match arms), and packaging (`pyproject.toml`, `setup.py` — no PyPI release
-for v2, dbt Labs ships it in the monorepo binary).
+- Entra authentication is unit-tested but lacks live-server verification; the live run used SQL authentication. Minimum catalog permissions have not been established for least-privilege users.
+- Windows/integrated auth, named instances, case-sensitive collation behavior, dynamic data masking/denies, custom indexes and several v1-only materializations remain deferred or unsupported; see `05-open-questions-and-risks.md` and the upstream PR draft.
+- `dbt.date_spine` and `dbt_utils.expression_is_true` remain known SQL Server package-compatibility gaps.
+- The default parallel `dbt-adapter` test run showed a Databricks catalogs-v2 shared-state failure and an Arrow IPC LZ4 feature failure. Serial execution with the LZ4 feature passed the full adapter suite.

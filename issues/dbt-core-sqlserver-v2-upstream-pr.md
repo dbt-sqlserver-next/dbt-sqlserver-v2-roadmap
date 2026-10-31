@@ -18,22 +18,21 @@ so the branch is at the point where this was supposed to get opened.
 
 ## Branch state
 
-- `sqlserver-v2-port` (`4d70a1069`) is on `upstream/main` `315bad676`, with
-  fork PRs [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21) to
-  [#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26) merged. #26
-  moves a model's own CTEs into its unit test's `WITH` list. The #15766 pair
-  was dropped; #15766 and #15765 are closed.
-- It merges into `upstream/main` `242065240` without conflicts.
-- The live body matches the draft below.
-- Upstream CI hasn't run on #15769: it's a public fork and needs the
-  `ci:approve-public-fork-ci` label from a maintainer. CodeScene's one critical
-  finding is `SqlServerDbConfig::set_field`, the same per-field `match` as
-  Fabric's.
+- Local `sqlserver-v2-port` is `bad853106`, merging port head `4d70a106` with
+  `dbt-labs/dbt:main` `b601ffe4`. The merge includes upstream's 2.0.8-era API
+  refactors, including boxed `Column` constructors and generic profile setup.
+- The live PR is still open/draft at remote head `4d70a106` and reports a dirty
+  merge state. The local refresh has not been pushed; upstream CI has not run
+  on it.
+- The branch still includes fork PRs [#21](https://github.com/dbt-sqlserver-next/dbt-core/pull/21)
+  through [#26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26). The
+  #15766 pair remains dropped; #15766 and #15765 are closed.
 
 ## Notes for filing
 
-**Changelog.** `.changes/unreleased/Features-20260803-sqlserver-adapter.yaml`
-(`kind: Features`, `issue: "15714"`) is committed on the branch.
+**Changelogs.** `.changes/unreleased/Features-20260803-sqlserver-adapter.yaml`
+records the adapter; `.changes/unreleased/Fixes-20261031-045025.yaml` records
+the current correctness and CTE schema fixes.
 
 ## Draft PR
 
@@ -66,8 +65,8 @@ Registering the adapter type makes every exhaustive `match adapter_type()` non-e
 - **Auth:** native SQL login is a new `SQLServerAuthIR` variant beside the Entra flows, and an unset `authentication` means `sql`, as in v1. `encrypt`, `TrustServerCertificate` and the connection timeout follow v1's ADBC backend ([dbt-msft/dbt-sqlserver#783](https://github.com/dbt-msft/dbt-sqlserver/pull/783)), checked against a self-signed instance.
 - **Catalog:** reads `sys.objects`, `sys.schemas`, `sys.columns` and `sys.types`, not `Fabric`'s `sp_tables`/`sp_columns`, which on SQL Server 2022 can't read another database and match `@table_name` as a `LIKE` pattern.
 - **Types:** `STRING` → `VARCHAR(MAX)`, v1's native-string default; decimals → `float` or `int` by scale, v1's rule. Column `data_type` keeps lengths as v1's `SQLServerColumn` does (`nvarchar(10)`, `varchar(max)`), and the type formatter never appends `NOT NULL`, since its callers are `CAST` targets.
-- **Macro package:** v1's, synced with dbt-sqlserver 1.12.0, without the calls the Rust adapter lacks (`commit_if_open`, `max_rows`). Widening goes through `sqlserver__expand_target_column_types`, which passes `prefer_single` as v1's Python does, so a single `ALTER COLUMN` keeps the column's indexes and default. `indexes:`, `full_refresh_build: prebuilt` and `table_refresh_method: dml` raise a named compiler error.
-- **Unit tests:** `render_unit_test` gets a `SqlServer` branch beside its DuckDB, ClickHouse, Snowflake, BigQuery and Databricks ones. T-SQL rejects the model's own `WITH` inside `<model>_actual` (Msg 156), and v2 doesn't run v1's `sqlserver__get_unit_test_sql` (#16504), so the model's CTEs move into the unit test's `WITH` list, split off with `split_leading_ctes` (`dbt-jinja-utils`). The expected-schema probe splices them the same way, because `sqlserver__get_empty_subquery_sql` drops a `WITH` header.
+- **Macro package:** based on v1's 1.12.0 sync, with follow-up fixes for empty full-refresh tables containing `IDENTITY`, delete+insert target aliasing, `NOT NULL` preservation during widening, and quoted snapshot columns. CTE schema probes use `sp_describe_first_result_set` and return a typed empty result; leading `;WITH` is recognized. `indexes:`, `full_refresh_build: prebuilt` and `table_refresh_method: dml` still raise named compiler errors.
+- **Unit tests:** `render_unit_test` has a SQL Server branch. Model CTEs are lifted into the unit-test `WITH` list; `dbt-jinja-utils::inject_and_persist_ephemeral_models` now aliases its fallback derived table as required by T-SQL. The expected-schema probe splices leading CTEs into scope and uses an empty typed schema probe for CTE inputs.
 - **Behavior flags:** none registered. v1's flags have no alternate v2 code path, so each stays at its v1 default.
 
 ## Deferred / explicitly out of scope
@@ -83,39 +82,38 @@ Each is cited against the v1 behavior it diverges from in the fork PRs and in [`
 
 ## Verified
 
-On `4d70a1069`, based on `main` `315bad676`; it merges into `main` `242065240` without conflicts. Crates that #26 didn't touch were last run on `fa6731a42`, which differs only in `dbt-tasks-sa` and `dbt-jinja-utils`.
+On local merge commit `bad853106`, first parent `4d70a106` and upstream parent `b601ffe4`:
 
-- `cargo fmt --check`, and `cargo clippy --all-targets -D warnings` on the touched crates: clean
-- `cargo build -p dbt-sa-cli`: clean
-- Tests, all passing:
+- `cargo fmt --check` on touched crates and `cargo clippy -p dbt-adapter -p dbt-adapter-engine -p dbt-init -p dbt-profile-schemas -p dbt-jinja-utils -p dbt-loader -p dbt-tasks-sa -p dbt-sa-cli --all-targets -- -D warnings`: clean
+- `cargo check` on the touched adapter, profile, loader, task and CLI crates and `cargo build -p dbt-sa-cli`: clean
+- Tests:
 
   | Crate | Passed |
   |---|---|
-  | `dbt-adapter --lib` | 1518 |
-  | `dbt-schemas` | 683 |
-  | `dbt-auth` | 329 |
-  | `dbt-loader` | 243 |
-  | `dbt-tasks-sa` | 188 |
-  | `dbt-jinja-utils` | 130 |
-  | `dbt-adapter-sql` | 41 |
-  | `dbt-adapter-core` | 17 |
+  | `dbt-adapter --lib` (LZ4 enabled, one test thread) | 1588 |
+  | `dbt-schemas` | 708 |
+  | `dbt-auth` | 353 |
+  | `dbt-loader` | 258 |
+  | `dbt-tasks-sa` | 285 |
+  | `dbt-jinja-utils` | 161 |
+  | `dbt-adapter-sql` | 46 |
+  | `dbt-adapter-core` | 20 |
   | `dbt-init` | 7 |
-  | `dbt-df-providers` | 5 |
-  | `dbt-profile-schemas` | 1 |
+  | `dbt-profile-schemas` | 3 |
 
-On SQL Server 2022 (16.0.4295.3) with SQL auth:
+On SQL Server 2022 `16.0.4295.3` with SQL auth, the rebuilt V2 CLI:
 
-- **A scratch project** builds 8/8 with `--full-refresh` and again without: a `check` snapshot over a `WITH` query, two incremental models, views, a unit test and generic tests.
-- **Unit tests** on models with their own CTEs pass, including one with an ephemeral input, and a wrong expectation fails with the right diff.
-- **Earlier commits of this branch,** as listed in each fork PR:
-  - generic tests that pass, warn and fail, a singular test and `store_failures`;
-  - a MERGE rerun, a widened column on an indexed and defaulted column, and `on_schema_change: sync_all_columns`;
-  - `persist_docs`, `drop_schema`, `run-operation` writes, and unchanged and stale views.
+- connects with `dbt debug`;
+- builds a full-refresh table from an `IDENTITY` source without giving the target an `IDENTITY` column;
+- runs a composite-key delete+insert incremental model twice and preserves nonmatching rows;
+- widens a `NOT NULL` column with `on_schema_change: sync_all_columns` and preserves nullability/data;
+- runs the four-step type rewrite and removes a leftover temp column while preserving nullability/data;
+- adds a reserved-word snapshot column from a semicolon-prefixed CTE;
+- runs a non-leading-`WITH` ephemeral reference and a CTE schema-only probe without evaluating a divide-by-zero expression.
 
-Other auth modes are unit-tested in `dbt-auth` only; no Entra-enabled server was available.
+Only SQL auth was exercised live; Entra is unit-tested but no Entra-enabled server was available. The default parallel adapter test run also exposed an unrelated Databricks catalogs-v2 shared-state failure; the serial run with Arrow IPC LZ4 enabled passed all adapter tests.
 
 ## Known gaps outside this diff
 
-- A model that refs an ephemeral model and doesn't start with `WITH` fails: the shared CTE injection wraps it in an unaliased derived table (Msg 102), #16505.
 - `dbt.date_spine` fails on SQL Server (nested `WITH`, `order by 1`).
 - `dbt_utils.expression_is_true` selects an unaliased `1`, which T-SQL rejects inside the test wrapper.

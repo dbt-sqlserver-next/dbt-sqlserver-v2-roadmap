@@ -3,6 +3,16 @@
 Source: https://docs.getdbt.com/guides/adapter-creation-v2 (Step 6), plus
 SQL Server-specific additions given the auth/quoting decisions in this plan.
 
+## Current V2 refresh evidence
+
+On local merge `bad853106`, the rebuilt V2 CLI passed `dbt debug` on SQL Server
+2022 `16.0.4295.3` with SQL auth. Live checks covered full refresh from an
+IDENTITY source, composite-key delete+insert, `sync_all_columns` type widening,
+the four-step non-null type rewrite, a snapshot adding a reserved-word column,
+non-leading-WITH ephemeral references, and semicolon-prefixed CTE schema
+discovery that did not evaluate a divide-by-zero expression. Scratch objects
+were dropped. The matrix below records remaining gaps.
+
 ## 1. Type-checking gate (run after every crate, not just at the end)
 
 ```bash
@@ -68,30 +78,22 @@ the package's, not the adapter's. `dbt_utils`, `audit_helper`,
   (Fabric groups with Bigquery/Databricks/Spark; Snowflake uppercases).
   Choose SQL Server's arm deliberately — its default collation is
   case-insensitive — and test round-tripping mixed-case seed headers.
-- [ ] `dbt run` — table, view, incremental (all supported strategies:
-  `append`, `delete+insert`, `merge`, `microbatch` per the `Fabric` parity
-  assumption in `02-implementation-steps.md`).
-- [ ] `dbt snapshot` — timestamp and check strategies.
-- [ ] `dbt test` — generic + singular tests, unit tests
-  (`get_fixture_sql.sql`/`unit_test_create_table_as.sql` from the porting map).
+- [~] `dbt run` — full-refresh table and incremental delete+insert/schema-widen
+  paths passed; view and other incremental strategies (`append`, `merge`,
+  `microbatch`) remain unverified.
+- [~] `dbt snapshot` — check-strategy CTE and reserved-word-column migration
+  passed; timestamp strategy remains unverified.
+- [ ] `dbt test` — generic/singular tests and live dbt unit tests remain
+  unverified (Rust unit tests passed).
 - [ ] Schema/database create-if-not-exists idempotency (`create_schema` uses
   `sys.schemas` existence check in v1 — confirm the v2 port preserves this,
   since re-running `dbt build` shouldn't fail on existing schemas).
-- [ ] Identifier quoting edge cases under the decided double-quote scheme
-  (`05-open-questions-and-risks.md` #1): reserved words, mixed-case
-  identifiers, a name containing a `"` (must render doubled, `"ab""cd"`), a
-  schema containing a `.` or a backslash (the string-literal and index-name
-  failures v1 fixed in #795 — `dbt-sqlserver`'s `TestIndexMacros` covers all
-  of these in one schema name, `…_dom\usr.x"q`, worth copying), and a session
-  where `QUOTED_IDENTIFIER` defaults to `OFF` (confirming the init SQL
-  overrides it). No longer a v1/v2 divergence — v1 renders identifiers the
-  same way as of 1.12 — but still the highest-risk area, because the failures
-  are silent rather than loud.
-- [ ] Each implemented auth mode individually: service principal, AD
-  password, environment credential, and plain SQL auth — one `profiles.yml`
-  target per mode, each run through a full `dbt build`.
-- [ ] TLS/encrypt behavior against a self-signed on-prem instance (validates
-  the `encrypt`/`TrustServerCertificate`-equivalent gap fix).
+- [~] Identifier quoting: a reserved-word snapshot column was verified live;
+  embedded quotes, dotted/backslash names and a session defaulting
+  `QUOTED_IDENTIFIER` off remain unverified.
+- [~] Auth/TLS: SQL auth with `encrypt` and `trust_cert` passed live; Entra
+  service principal, AD password and environment credentials have unit tests
+  only, with no Entra-enabled server available.
 - [ ] Long-running/large incremental `MERGE` — validate generated T-SQL
   against SQL Server's actual `MERGE` syntax constraints (stricter than some
   other warehouses about statement termination, output clauses).

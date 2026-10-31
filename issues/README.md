@@ -60,6 +60,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-show-trailing-order-by](v1-show-trailing-order-by.md) | dbt-msft/dbt-sqlserver | `dbt show` fails when the query ends in `order by` | — |
 | [v1-persist-docs-truncation](v1-persist-docs-truncation.md) | dbt-msft/dbt-sqlserver | `persist_docs` cuts descriptions at 3750 characters without a warning | — |
 | [v1-readme-document-known-limits](v1-readme-document-known-limits.md) | dbt-msft/dbt-sqlserver | README states no limits for `hash`, `split_part` type, `listagg` size, snapshot hash and data-test views | — |
+| [v1-dbt-core-113-support](v1-dbt-core-113-support.md) | dbt-msft/dbt-sqlserver | Add explicit dbt Core 1.13 compatibility coverage before asserting tested support | Run unit and SQL Server functional suites against 1.13; no incompatibility reproduced yet |
 
 ## Filed, open
 

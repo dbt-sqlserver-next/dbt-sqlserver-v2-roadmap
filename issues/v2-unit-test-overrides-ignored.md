@@ -7,10 +7,12 @@ closed: 2026-11-02
 related: v2-unit-test-actual-cte-nests-model-with-clause-tsql.md
 ---
 
-> **Upstream status, checked 2026-11-02:** closed by a maintainer. The issue
-> has no comments, linked fix PR, or linked commit. Its body proposes either
-> supporting the overrides or warning users that they are ignored, but no
-> option or implementation was recorded before closure.
+> **Resolved upstream 2026-11-02** by
+> [`a5d0924`](https://github.com/dbt-labs/dbt/commit/a5d092475163d44c37f70fc4e656f5710f7d8121).
+> Fusion intentionally continues to build unit-test SQL in Rust; the commit
+> emits a warning when an effective project/package override is ignored.
+> Internal adapter macros are excluded from warnings. This does not make the
+> overrides execute.
 
 # [v2 Bug] Unit tests ignore `unit` materialization and `get_unit_test_sql` overrides
 

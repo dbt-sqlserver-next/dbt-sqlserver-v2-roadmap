@@ -60,7 +60,6 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-show-trailing-order-by](v1-show-trailing-order-by.md) | dbt-msft/dbt-sqlserver | `dbt show` fails when the query ends in `order by` | — |
 | [v1-persist-docs-truncation](v1-persist-docs-truncation.md) | dbt-msft/dbt-sqlserver | `persist_docs` cuts descriptions at 3750 characters without a warning | — |
 | [v1-readme-document-known-limits](v1-readme-document-known-limits.md) | dbt-msft/dbt-sqlserver | README states no limits for `hash`, `split_part` type, `listagg` size, snapshot hash and data-test views | — |
-| [v1-dbt-core-113-support](v1-dbt-core-113-support.md) | dbt-msft/dbt-sqlserver | Verify Core 1.13, use the fork-built parser for SQL Server `--use-v2-parser`, and implement catalog writing with `catalog_database` | Test parser handoff and SQL Server functional paths; no runtime failure reproduced yet |
 
 ## Filed, open
 
@@ -73,6 +72,7 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |
 | [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
 | [v1-drop-python-310](v1-drop-python-310.md) | [dbt-msft/dbt-sqlserver#897](https://github.com/dbt-msft/dbt-sqlserver/issues/897) | Remove Python 3.10 soft-installability now that it is end-of-life | Untriaged |
+| [v1-dbt-core-113-support](v1-dbt-core-113-support.md) | [dbt-msft/dbt-sqlserver#903](https://github.com/dbt-msft/dbt-sqlserver/issues/903) | Add Core 1.13 CI coverage and use the SQL Server fork-built parser for `--use-v2-parser` | Needs Core 1.13 and parser handoff verification |
 
 ## Closed
 

@@ -1,10 +1,16 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-labs/dbt/issues/16504
+closed: 2026-11-02
 related: v2-unit-test-actual-cte-nests-model-with-clause-tsql.md
 ---
+
+> **Upstream status, checked 2026-11-02:** closed by a maintainer. The issue
+> has no comments, linked fix PR, or linked commit. Its body proposes either
+> supporting the overrides or warning users that they are ignored, but no
+> option or implementation was recorded before closure.
 
 # [v2 Bug] Unit tests ignore `unit` materialization and `get_unit_test_sql` overrides
 

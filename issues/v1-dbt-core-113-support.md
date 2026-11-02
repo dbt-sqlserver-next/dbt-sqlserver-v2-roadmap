@@ -15,6 +15,10 @@ No 1.13 runtime incompatibility has been reproduced. The 1.13.0b1 notes change d
 
 - **Optional v2 parser:** Core 1.13 invokes `dbt-core-experimental-parser parse` when `--use-v2-parser` is set. Its upstream Rust parser does not define a SQL Server `AdapterType`; Core re-discovers macros from the installed Python adapter after parsing, but that cannot add SQL Server dialect support to the Rust parse. The SQL Server fork does implement `AdapterType::SqlServer` and its release workflow packages the Rust `dbt` binary as the `dbt-core-experimental-parser` distribution. The parser test lane therefore needs to replace Core's upstream `dbt-core-experimental-parser` dependency with the fork-built package (or explicitly configure `--v2-parser` to the fork executable); it does not need to replace `dbt-core` itself. Core's range is `dbt-core-experimental-parser>=2.0.0b1,<3`, so verify the fork package version satisfies it. Test both default and custom `--packages-install-path` values through the handoff.
 
+## Readiness PR spike (not a 1.13 support blocker)
+
+Core 1.13's `catalog_database` override applies to model relations using a catalog-write integration. SQL Server currently has catalog-read macros but no registered `CATALOG_INTEGRATIONS` or catalog-write integration. During readiness PR work, assess whether SQL Server should implement/register one so this override can be used, and test its database-name precedence if pursued. This is a spike to decide, not a requirement for Core 1.13 compatibility or parser support.
+
 ## Steps to reproduce
 
 There is no known failing runtime case. In a clean environment, install this adapter with `dbt-core==1.13.0b1` (then repeat with the first stable 1.13 release). Run the normal Python-parser path, then run `dbt parse --use-v2-parser` with `dbt-core-experimental-parser` built from the SQL Server fork; run the adapter's unit and SQL Server functional suites. The current CI configuration does not pin or report a dedicated Core 1.13 lane.

@@ -2,12 +2,19 @@
 target_repo: dbt-labs/dbt
 branch: 1.13.latest
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-labs/dbt/issues/16434
+pr: https://github.com/dbt-labs/dbt/pull/17203
 related: v1-run-operation-writes-rolled-back.md
 ---
 
 # [1.x Bug] `run-operation` never commits, so writes inside a dbt transaction are rolled back on success
+
+> **In process 2026-11-24** — [PR #17203](https://github.com/dbt-labs/dbt/pull/17203)
+> ("Commit a successful run-operation's open transaction", `Resolves #16434`)
+> implements the commit-on-success fix below on both paths and is mergeable
+> pending review. Tracked here as closed; the live issue stays open until it
+> merges.
 
 ### Is this a new bug in dbt-core?
 

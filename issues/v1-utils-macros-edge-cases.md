@@ -5,31 +5,11 @@ status: draft
 related: ../plan/04-testing-and-validation.md
 ---
 
-# `date_trunc` drops the time below day, `split_part` fails on `&`, `len` drops trailing spaces and `listagg` ignores `limit_num`
+# `split_part` fails on `&` and cuts at 128 characters, `len` drops trailing spaces, `listagg` ignores `limit_num`
 
-Measured on SQL Server 2022 (16.0.4295.3, Linux), mssql-python backend, against v1.12.0.
+Measured on SQL Server 2022 (16.0.4295.3, Linux), mssql-python backend, against v1.12.3.
 
-`tests/functional/adapter/dbt/test_utils.py` runs the shared dbt suites for these macros, which cover `day` and `month` for `date_trunc` and, for `listagg`, an expected file that matches the current output.
-
-## `date_trunc` returns a `DATE` for every part
-
-`sqlserver__date_trunc` is `CAST(DATEADD(p, DATEDIFF(p, 0, x), 0) AS DATE)`.
-
-| Part | Result for `2024-05-06 13:45:10.123` |
-|---|---|
-| `year` … `day` | correct |
-| `hour` | `2024-05-06` (should be `2024-05-06 13:00`) |
-| `minute` | `2024-05-06` (should be `2024-05-06 13:45`) |
-| `second`, `millisecond` | Msg 535, `datediff` overflow: seconds since 1900 exceed `int` |
-
-`DATEDIFF_BIG` does not help; `DATEADD` takes an `int` number. Anchoring at the value's own day fits every sub-day part and returns the truncated value:
-
-```sql
-DATEADD(second, DATEDIFF(second, CAST(CAST(x AS date) AS datetime2), x), CAST(CAST(x AS date) AS datetime2))
--- 2024-05-06 13:45:10
-```
-
-Same expression checked for `hour`, `minute`, `second` and `millisecond`.
+`tests/functional/adapter/dbt/test_utils.py` runs the shared dbt suites for these macros, and for `listagg` its expected file matches the current output.
 
 ## `split_part` fails or truncates
 
@@ -53,8 +33,6 @@ T-SQL has no bounded aggregate that fits inside an expression, so the macro can'
 ## Steps to reproduce
 
 ```sql
-select {{ dbt.date_trunc('hour', "cast('2024-05-06 13:45:10' as datetime2)") }}   -- 2024-05-06
-select {{ dbt.date_trunc('second', "cast('2024-05-06 13:45:10' as datetime2)") }} -- Msg 535
 select {{ dbt.split_part("'a&b,c'", "','", 1) }}                                   -- XML parsing error
 select {{ dbt.length("'a  '") }}                                                   -- 1
 select {{ listagg('v', "','", 'order by v', 2) }} from (values ('a'),('b'),('c')) t(v)  -- a,b,c
@@ -64,4 +42,4 @@ select {{ listagg('v', "','", 'order by v', 2) }} from (values ('a'),('b'),('c')
 
 - Database: SQL Server 2022 (16.0.4295.3), Linux, Developer Edition
 - Backend: mssql-python
-- dbt-sqlserver: v1.12.0
+- dbt-sqlserver: v1.12.3

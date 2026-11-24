@@ -1,7 +1,9 @@
 # 03 — Macro Porting Map (v1 → v2)
 
-Source tree: `dbt-sqlserver/dbt/include/sqlserver/macros/` (34 files).
-Destination: `dbt-core/crates/dbt-loader/src/dbt_macro_assets/dbt-sqlserver/macros/`.
+Source tree: `dbt-sqlserver/dbt/include/sqlserver/macros/` (`master`, v1.12.3: 53
+`.sql` files). Destination:
+`dbt-core/crates/dbt-loader/src/dbt_macro_assets/dbt-sqlserver/macros/` (41
+`.sql` files; the rest are deferred features, listed below).
 
 **The baseline is to vendor the v1 tree, not to port macro by macro.** v2's
 `dbt-fabric/` package is 42 files copied essentially verbatim from
@@ -41,7 +43,9 @@ grantees, index/constraint names and generated test-view names via
   finding no columns. 11 sites, fixed in #795. Any v2 macro or Rust catalog
   query that builds a name inside a string literal inherits it (`05` risks).
 - **Escaping**: v1 doubles an embedded `"` in both `adapter.quote()` and
-  relation rendering. v2 must too, or names v1 accepts break (`05` #1).
+  relation rendering. The vendored package relies on the shared
+  `escaped_identifier`, which doubles the T-SQL delimiter for SQL Server, so a
+  name containing `"` renders as `"a""b"` in both places (`00-current-state.md`).
 
 ## v2 semantics that break v1 macro bodies
 

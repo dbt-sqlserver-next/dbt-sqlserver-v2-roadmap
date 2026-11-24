@@ -1,13 +1,19 @@
 ---
 target_repo: dbt-labs/dbt
 type: feature
-status: open
+status: closed
 url: https://github.com/dbt-labs/dbt/issues/15714
 labels: [type:feature, area:adapters, engine:v2]
+pr: https://github.com/dbt-labs/dbt/pull/15769
 related: ../plan/README.md
 ---
 
 # [Feature] Add SQL Server adapter support (dbt Fusion / v2)
+
+> **In process 2026-11-24** — draft PR
+> [#15769](https://github.com/dbt-labs/dbt/pull/15769) closes this issue and is
+> mergeable pending review. Tracked here as closed; the live issue stays open
+> until the PR merges.
 
 ## Is this your first time submitting a feature request?
 

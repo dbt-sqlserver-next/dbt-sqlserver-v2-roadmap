@@ -5,23 +5,11 @@ status: draft
 related: v1-use-database-deletes-embedded-quote.md
 ---
 
-# Names containing `;`, `'`, `-` or `&` break the connection string and five macros
+# Names containing `-`, `'` or `&` break `drop_schema`, `get_provision_sql`, `get_tables_by_pattern_sql` and the `drop_*` macros
 
-Measured on SQL Server 2022 (16.0.4295.3, Linux), mssql-python backend, against v1.12.0.
+Measured on SQL Server 2022 (16.0.4295.3, Linux), mssql-python backend, against v1.12.3.
 
-An unusual name reaches a connection string or generated SQL unquoted. Related: [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md), [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md), [v1-varchar-name-literals-non-codepage](v1-varchar-name-literals-non-codepage.md).
-
-## A database name containing `;` breaks the connection string
-
-`build_common_connection_string_parts` writes `Database={credentials.database}` and `SERVER=<host>` as-is, while `UID`, `PWD`, `client_id` and `client_secret` go through `format_connection_string_value`. A `;` in the value ends the keyword early. With `create database [qw;db]` and `database: qw;db` in the profile, the string is:
-
-```
-SERVER=127.0.0.1,1433;Database=qw;db;UID=SA;PWD=***;encrypt=No;TrustServerCertificate=Yes
-```
-
-and the connection fails with `Connection string parsing failed: Incomplete specification: keyword 'db' has no value (missing '=')`.
-
-`Database={qw;db}` connects and `db_name()` returns `qw;db`, so passing the database (and the host argument) through `format_connection_string_value` fixes it. Measured on mssql-python; the pyodbc string is built the same way.
+An unusual name reaches generated SQL unquoted. The database name is escaped in the connection string; the four sites below are not. Related: [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md), [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md), [v1-varchar-name-literals-non-codepage](v1-varchar-name-literals-non-codepage.md).
 
 ## `drop_schema` doesn't quote the schema
 
@@ -57,10 +45,10 @@ select @s = (select 'DROP INDEX ' + quotename(i.[name]) + ' ON dbo.qw_t; '
 select @s;  -- DROP INDEX [ix&amp;b] ON dbo.qw_t;
 ```
 
-For the connection string, set `database: qw;db` after `create database [qw;db]`. For the others, use a schema `qw-x`, a principal `O'Brien` with `auto_provision_aad_principals`, and a database `qw-db`.
+Use a schema `qw-x`, a principal `O'Brien` with `auto_provision_aad_principals`, and a database `qw-db`.
 
 ## Environment
 
 - Database: SQL Server 2022 (16.0.4295.3), Linux, Developer Edition
 - Backend: mssql-python
-- dbt-sqlserver: v1.12.0
+- dbt-sqlserver: v1.12.3

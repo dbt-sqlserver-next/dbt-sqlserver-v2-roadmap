@@ -1,11 +1,12 @@
 # 05 — Decisions & Risks
 
-Current on `dbt-core:sqlserver-v2-port` `bad853106`.
+Current on `dbt-core:sqlserver-v2-port` `51db264c1`.
 
 ## Settled decisions
 
-1. **Identifiers use double quotes.** `quote_char` is `"`; `quoted()` doubles
-   embedded quotes. Live SQL Server 2022 verification confirmed the V2 profile's
+1. **Identifiers use double quotes.** `quote_char` is `"`; relation components
+   render through the shared `escaped_identifier`, which doubles an embedded
+   quote. Live SQL Server 2022 verification confirmed the V2 profile's
    ADBC session has `QUOTED_IDENTIFIER` on; no separate init statement is used.
 2. **Authentication includes SQL login and the implemented Entra flows.** An
    omitted `authentication` defaults to `sql`. Windows/trusted-connection auth
@@ -30,8 +31,6 @@ Current on `dbt-core:sqlserver-v2-port` `bad853106`.
 - User-configured indexes, `full_refresh_build: prebuilt`,
   `table_refresh_method: dml`, scalar-function materializations and table clone.
 - Collation-aware case folding.
-- v1's view catalog plan-reuse optimization (`916fc235`) is a possible
-  follow-up, not part of this RC refresh.
 
 ## Remaining risks
 
@@ -40,8 +39,20 @@ Current on `dbt-core:sqlserver-v2-port` `bad853106`.
   versions need separate evidence before claiming support.
 - Minimum catalog permissions are unknown; restricted logins may see only a
   subset of `sys.*` objects.
+- The view materialization is in the render harness for the three scenarios the
+  other adapters use. The skip/rebuild branch inside it — the one place the
+  vendored macro diverges from v1 — is covered by the live matrix only: a
+  harness test for it would stub `run_query` with a fixed row and assert on
+  emitted SQL, which is the property the server shows directly.
 - Package compatibility gaps remain: `dbt.date_spine` uses unsupported nested
   `WITH`/`order by 1`, and `dbt_utils.expression_is_true` emits an unaliased
   scalar inside the test wrapper.
-- Upstream PR #15769 remains draft at remote head `4d70a106`; the local refreshed
-  branch has not been pushed and upstream CI has not run on it.
+- Cancellation reaches a driver that does not cancel. The `mssql` ADBC driver
+  1.8.0 exports `AdbcStatementCancel` and returns success without stopping the
+  statement (SQL Server 2022 `16.0.4295.3`, `sys.dm_exec_requests` unchanged
+  until completion), and the port carries no cancel code of its own, so
+  Ctrl-C in Fusion hits the same no-op as dbt-core#15494. v1 has the same gap,
+  plus an mssql-python 1.14.0 cursor with no `cancel()`. `KILL <spid>` works but
+  needs `ALTER ANY CONNECTION`.
+- Upstream PR #15769 is a draft at remote head `51db264c1`, the local branch
+  head; it is mergeable and blocked on the required review.

@@ -1,9 +1,8 @@
 # 02 — V2 Port Implementation Status
 
-Current as of 2026-10-31. The SQL Server port is implemented locally in
-`dbt-core:sqlserver-v2-port` at merge commit `bad853106`, based on upstream
-`main` `b601ffe4`. The local branch has not been pushed; upstream PR #15769
-still points at remote head `4d70a106`.
+Current as of 2026-11-24. The SQL Server port is implemented locally in
+`dbt-core:sqlserver-v2-port` at `51db264c1`, based on upstream `main`
+`aa8534461`. PR #15769 points at the same head.
 
 ## Implemented
 

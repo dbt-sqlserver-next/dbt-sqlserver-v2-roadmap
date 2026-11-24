@@ -1,12 +1,19 @@
 ---
 target_repo: dbt-labs/dbt
 type: bug
-status: open
+status: closed
 url: https://github.com/dbt-labs/dbt/issues/16505
+closed: 2026-11-02
+resolved_by: https://github.com/dbt-labs/dbt/commit/cd62517e867204bffc5e9a87ed4ce5087c0c5c52
 related: https://github.com/dbt-msft/dbt-sqlserver/issues/166
 ---
 
 # [v2 Bug] The ephemeral select wrapper's derived table has no alias, which SQL Server requires
+
+> **Resolved upstream 2026-11-02** in [`cd62517e8`](https://github.com/dbt-labs/dbt/commit/cd62517e867204bffc5e9a87ed4ce5087c0c5c52),
+> which aliases the wrapper as `) as {model_name}` and teaches
+> `dbt-adapter` `sql/tokenizer.rs` to skip the alias. Upstream `main`
+> `aa8534461` carries it, so the port needs no local change.
 
 ### Is this a new bug in dbt v2.x compared to the latest version of dbt 1.x?
 

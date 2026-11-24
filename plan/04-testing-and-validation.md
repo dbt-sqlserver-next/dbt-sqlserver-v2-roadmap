@@ -5,13 +5,16 @@ SQL Server-specific additions given the auth/quoting decisions in this plan.
 
 ## Current V2 refresh evidence
 
-On local merge `bad853106`, the rebuilt V2 CLI passed `dbt debug` on SQL Server
-2022 `16.0.4295.3` with SQL auth. Live checks covered full refresh from an
-IDENTITY source, composite-key delete+insert, `sync_all_columns` type widening,
-the four-step non-null type rewrite, a snapshot adding a reserved-word column,
-non-leading-WITH ephemeral references, and semicolon-prefixed CTE schema
-discovery that did not evaluate a divide-by-zero expression. Scratch objects
-were dropped. The matrix below records remaining gaps.
+On local `51db264c1`, the rebuilt V2 CLI passed `dbt debug` on SQL Server
+2022 `16.0.4295.3` with SQL auth, built a model and its test on two targets, and
+created a schema owned by `guest` with `schema_authorization: guest` (`dbo`
+without it). On the same branch, live checks covered `date_trunc` sub-day and
+week parts, `money`/`smallmoney` contracts, view rebuild-skip and view drop,
+`sync_all_columns` type widening with `NOT NULL`, a snapshot adding a
+reserved-word column, full refresh from an IDENTITY source, doubled-quote
+rendering for a name containing `"`, and a three-model build with three unit
+tests, two of them with empty `given` or `expect` rows. Scratch objects were
+dropped. The matrix below records remaining gaps.
 
 ## 1. Type-checking gate (run after every crate, not just at the end)
 

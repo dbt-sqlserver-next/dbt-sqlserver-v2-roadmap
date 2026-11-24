@@ -30,6 +30,7 @@ to carry both itself, and form labels are not applied.
 | dbt-labs/dbt-adapters | bug (1.x shared macros and adapters) | [bug-report.yml](https://github.com/dbt-labs/dbt-adapters/blob/main/.github/ISSUE_TEMPLATE/bug-report.yml) | `[Bug] …` | new-bug checkboxes, affected packages, Current, Expected, Steps, log, Environment, Additional Context |
 | dbt-labs/dbt-utils | bug | [bug_report.md](https://github.com/dbt-labs/dbt-utils/blob/main/.github/ISSUE_TEMPLATE/bug_report.md) | no prefix | Describe the bug, Steps to reproduce, Expected results, Actual results, log output, System information |
 | dbt-msft/dbt-sqlserver | bug | [bug_report.md](https://github.com/dbt-msft/dbt-sqlserver/blob/master/.github/ISSUE_TEMPLATE/bug_report.md) | no prefix | description, Steps to reproduce, Environment (database, backend, auth/driver/OS, collation), `dbt --version`, Log excerpt |
+| adbc-drivers/mssql | bug | [01-bug.yml](https://github.com/adbc-drivers/mssql/blob/main/.github/ISSUE_TEMPLATE/01-bug.yml) | no prefix | Driver Version, Microsoft SQL Server Version, What happened?, Stack Trace, How can we reproduce the bug?, Environment/Setup |
 | dbt-sqlserver-next/dbt-core | any | same files as dbt-labs/dbt | as dbt-labs/dbt | as dbt-labs/dbt |
 
 dbt-labs/dbt and dbt-adapters disable blank issues. dbt-labs/dbt's chooser
@@ -50,12 +51,11 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 | [v2-sqlserver-normalize-component-collation-fold](v2-sqlserver-normalize-component-collation-fold.md) | dbt-sqlserver-next/dbt-core | `normalize_component` lowercases regardless of collation | Needs a design decision |
 | [v2-date-spine-nested-cte-tsql](v2-date-spine-nested-cte-tsql.md) | dbt-msft/dbt-sqlserver | `date_spine` fails on SQL Server (nested `WITH`, `order by 1`); `sqlserver__date_spine` override | — |
 | [v1-varchar-name-literals-non-codepage](v1-varchar-name-literals-non-codepage.md) | dbt-msft/dbt-sqlserver | `varchar` name literals break table and incremental models named outside the code page | — |
-| [v1-identifier-length-127-vs-128](v1-identifier-length-127-vs-128.md) | dbt-msft/dbt-sqlserver | `MAX_CHARACTERS_IN_IDENTIFIER` is 127; SQL Server allows 128; the columnstore index name can exceed 128 | — |
 | [v1-use-database-deletes-embedded-quote](v1-use-database-deletes-embedded-quote.md) | dbt-msft/dbt-sqlserver | `get_use_database_sql` strips `"` instead of escaping it | — |
 | [v1-use-database-state-vs-unqualified-catalog-reads](v1-use-database-state-vs-unqualified-catalog-reads.md) | dbt-msft/dbt-sqlserver | Two catalog reads ignore their database argument and follow the last `USE` | — |
-| [v1-utils-macros-edge-cases](v1-utils-macros-edge-cases.md) | dbt-msft/dbt-sqlserver | `date_trunc` returns `DATE` below day; `split_part` fails on `&` and cuts parts at 128; `len` drops trailing spaces; `listagg` ignores `limit_num` | — |
+| [v1-utils-macros-edge-cases](v1-utils-macros-edge-cases.md) | dbt-msft/dbt-sqlserver | `split_part` fails on `&` and cuts parts at 128; `len` drops trailing spaces; `listagg` ignores `limit_num` | — |
 | [v1-type-expansion-row-count](v1-type-expansion-row-count.md) | dbt-msft/dbt-sqlserver | The safe-expansion row count runs on every incremental and snapshot run | — |
-| [v1-database-and-object-name-quoting](v1-database-and-object-name-quoting.md) | dbt-msft/dbt-sqlserver | Names with `;`, `'`, `-` or `&` break the connection string, `drop_schema`, `get_provision_sql`, `get_tables_by_pattern_sql` and the `drop_*` macros | — |
+| [v1-database-and-object-name-quoting](v1-database-and-object-name-quoting.md) | dbt-msft/dbt-sqlserver | Names with `-`, `'` or `&` break `drop_schema`, `get_provision_sql`, `get_tables_by_pattern_sql` and the `drop_*` macros | — |
 | [v1-mssql-python-minimum-version](v1-mssql-python-minimum-version.md) | dbt-msft/dbt-sqlserver | The `mssql` extra allows mssql-python versions (1.7.1 to 1.14.0) that fail seeds with 16-digit decimals | — |
 | [v1-show-trailing-order-by](v1-show-trailing-order-by.md) | dbt-msft/dbt-sqlserver | `dbt show` fails when the query ends in `order by` | — |
 | [v1-persist-docs-truncation](v1-persist-docs-truncation.md) | dbt-msft/dbt-sqlserver | `persist_docs` cuts descriptions at 3750 characters without a warning | — |
@@ -65,19 +65,21 @@ sends 1.x adapter issues to dbt-adapters, which also ships the 1.x
 
 | Draft | Live | What it is | Pending |
 |---|---|---|---|
-| [v2-ephemeral-select-wrapper-derived-table-alias](v2-ephemeral-select-wrapper-derived-table-alias.md) | [dbt-labs/dbt#16505](https://github.com/dbt-labs/dbt/issues/16505) | Ephemeral CTE injection wraps the model in an unaliased derived table; T-SQL rejects it (Msg 102) | Untriaged |
-| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft) | Live body synced on `4d70a1069` (#26 merged); needs a maintainer to label CI |
-| [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | Scope issue the PR closes | Live body behind the draft (quoting, init SQL) |
+| [dbt-core-sqlserver-v2-upstream-pr](dbt-core-sqlserver-v2-upstream-pr.md) | [dbt-labs/dbt#15769](https://github.com/dbt-labs/dbt/pull/15769) | The adapter PR (draft), head `51db264c1` | Live body behind the draft; needs a maintainer to approve the workflow run |
 | [dbt-sqlserver-v2-migration-tracking](dbt-sqlserver-v2-migration-tracking.md) | [dbt-msft/dbt-sqlserver#786](https://github.com/dbt-msft/dbt-sqlserver/issues/786) | Tracking index for the whole migration | Live body behind the draft |
-| [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | `run-operation` never commits; `statement()` and `--sql` writes roll back on success | Untriaged |
-| [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged |
-| [v1-drop-python-310](v1-drop-python-310.md) | [dbt-msft/dbt-sqlserver#897](https://github.com/dbt-msft/dbt-sqlserver/issues/897) | Remove Python 3.10 soft-installability now that it is end-of-life | Untriaged |
+| [v1-core-unit-test-cleanup-rolled-back](v1-core-unit-test-cleanup-rolled-back.md) | [dbt-labs/dbt#16499](https://github.com/dbt-labs/dbt/issues/16499) | `unit` materialization never commits; its temp-table drop rolls back and leaves `__dbt_tmp` behind | Untriaged; no fix PR |
 | [v1-dbt-core-113-support](v1-dbt-core-113-support.md) | [dbt-msft/dbt-sqlserver#903](https://github.com/dbt-msft/dbt-sqlserver/issues/903) | Add Core 1.13 CI coverage and use the SQL Server fork-built parser for `--use-v2-parser`; assess `catalog_database` as a readiness-PR spike | Needs Core 1.13 and parser handoff verification |
+| [adbc-mssql-statement-cancel-noop](adbc-mssql-statement-cancel-noop.md) | [adbc-drivers/mssql#19](https://github.com/adbc-drivers/mssql/issues/19) | `AdbcStatementCancel` returns success while the query keeps running, so dbt core 1.x and Fusion cancel nothing | Untriaged; PR #923 does not link it yet |
 
 ## Closed
 
 | Draft | Live | Resolution |
 |---|---|---|
+| [v1-cancel-in-flight-statements-pr](v1-cancel-in-flight-statements-pr.md) | [dbt-msft/dbt-sqlserver#923](https://github.com/dbt-msft/dbt-sqlserver/pull/923) | Merged 2026-11-24, closing #922; `cancel()` probes `cancel()`, `adbc_cancel()`, then mssql-python's statement handle, and ADBC stays a driver no-op ([adbc-drivers/mssql#19](https://github.com/adbc-drivers/mssql/issues/19)) |
+| [v1-core-run-operation-never-commits](v1-core-run-operation-never-commits.md) | [dbt-labs/dbt#16434](https://github.com/dbt-labs/dbt/issues/16434) | In process: [PR #17203](https://github.com/dbt-labs/dbt/pull/17203) commits on both paths and is mergeable pending review; the live issue stays open until it merges |
+| [v1-drop-python-310](v1-drop-python-310.md) | [dbt-msft/dbt-sqlserver#897](https://github.com/dbt-msft/dbt-sqlserver/issues/897) | In process: [PR #905](https://github.com/dbt-msft/dbt-sqlserver/pull/905) raises `requires-python` to `>=3.11`; the live issue stays open until it merges |
+| [dbt-core-sqlserver-v2-bootstrap](dbt-core-sqlserver-v2-bootstrap.md) | [dbt-labs/dbt#15714](https://github.com/dbt-labs/dbt/issues/15714) | In process: draft PR [#15769](https://github.com/dbt-labs/dbt/pull/15769) closes it; the live issue stays open until the PR merges |
+| [v2-ephemeral-select-wrapper-derived-table-alias](v2-ephemeral-select-wrapper-derived-table-alias.md) | [dbt-labs/dbt#16505](https://github.com/dbt-labs/dbt/issues/16505) | Closed as completed 2026-11-02; upstream [`cd62517e8`](https://github.com/dbt-labs/dbt/commit/cd62517e867204bffc5e9a87ed4ce5087c0c5c52) aliases the wrapper as `) as {model_name}` and the tokenizer skips it |
 | [v2-unit-test-actual-cte-nests-model-with-clause-tsql](v2-unit-test-actual-cte-nests-model-with-clause-tsql.md) | not filed | Fixed on the port instead: a `SqlServer` branch in `render_unit_test` lifts the model's CTEs into the unit test's `WITH` list, with no DDL ([fork #26](https://github.com/dbt-sqlserver-next/dbt-core/pull/26)). The general question, v2 ignoring `unit`/`get_unit_test_sql` overrides, is still to be measured and drafted |
 | [v2-unit-test-overrides-ignored](v2-unit-test-overrides-ignored.md) | [dbt-labs/dbt#16504](https://github.com/dbt-labs/dbt/issues/16504) | Resolved by upstream commit [`a5d0924`](https://github.com/dbt-labs/dbt/commit/a5d092475163d44c37f70fc4e656f5710f7d8121): warn when an effective external override is ignored; Rust still builds unit-test SQL |
 | [v2-execute-inner-last-statement-clobbers-fetch-result](v2-execute-inner-last-statement-clobbers-fetch-result.md) | [dbt-labs/dbt#15765](https://github.com/dbt-labs/dbt/issues/15765) | Closed as not planned with PR #15766: SQL Server sends each batch whole (#23), and #15766's rule matches no 1.x driver |

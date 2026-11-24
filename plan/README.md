@@ -89,8 +89,8 @@ one document:
 Registering `AdapterType::SqlServer` breaks exhaustive `match adapter_type()`
 blocks workspace-wide, so keep the implementation on the integration branch
 until the full slice builds. The local integration now includes upstream
-`main` `b601ffe4`; the live upstream PR still points at the previous fork head
-until the branch is pushed and PR CI is approved.
+`main` `aa8534461`. The branch is pushed and PR #15769 points at its head
+`51db264c1`; the run waits on the required workflow approval.
 
 - **Fork**: https://github.com/dbt-sqlserver-next/dbt-core
 - **Integration branch**: `sqlserver-v2-port`
